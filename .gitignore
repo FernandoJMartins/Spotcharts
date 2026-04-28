@@ -1,1 +1,30 @@
 .env
+
+# Node
+node_modules/
+frontend/node_modules/
+
+# Build outputs
+dist/
+frontend/dist/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Editor/IDE
+.vscode/
+.idea/
+
+# Mac
+.DS_Store
+
+# Misc
+.pytest_cache/
+*.pyo
+*.pyd
+env/
+/.env.local
+/.env.*
