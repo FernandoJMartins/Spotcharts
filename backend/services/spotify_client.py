@@ -6,6 +6,8 @@ import os
 import requests
 from urllib.parse import urlencode
 
+from ..utils.crypto import encrypt_str
+
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE = "https://api.spotify.com/v1"
 
@@ -25,7 +27,16 @@ class SpotifyClient:
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        # If Spotify returns a refresh_token, encrypt it for safe storage
+        if 'refresh_token' in data and data.get('refresh_token'):
+            try:
+                encrypted = encrypt_str(data.pop('refresh_token'))
+                data['refresh_token_encrypted'] = encrypted
+            except Exception:
+                # If encryption fails, propagate original response (fail-open)
+                pass
+        return data
 
     def refresh_token(self, refresh_token: str):
         payload = {
@@ -36,7 +47,15 @@ class SpotifyClient:
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
         resp.raise_for_status()
-        return resp.json()
+        data = resp.json()
+        # If a new refresh_token is issued, encrypt it
+        if 'refresh_token' in data and data.get('refresh_token'):
+            try:
+                encrypted = encrypt_str(data.pop('refresh_token'))
+                data['refresh_token_encrypted'] = encrypted
+            except Exception:
+                pass
+        return data
 
     def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20):
         # period mapping: short = short_term, medium = medium_term, long = long_term

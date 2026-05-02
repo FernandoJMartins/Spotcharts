@@ -6,3 +6,5 @@ django-cors-headers
 requests
 gunicorn
 django-environ
+cryptography
+PyJWT>=2.0.0
