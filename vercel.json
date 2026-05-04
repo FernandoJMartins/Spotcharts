@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "backend/config/wsgi.py",
+      "use": "@vercel/python"
+    },
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "backend/config/wsgi.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend"
+    }
+  ],
+  "env": {
+    "PYTHONPATH": "/var/task"
+  }
+}
