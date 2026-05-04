@@ -6,7 +6,7 @@ import os
 import requests
 from urllib.parse import urlencode
 
-from ..utils.crypto import encrypt_str
+from utils.crypto import encrypt_str
 
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE = "https://api.spotify.com/v1"
