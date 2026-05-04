@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpotifyCharts - Seus Top Tracks</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1DB954 0%, #191414 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 50px 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #191414;
+            font-size: 32px;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            color: #1DB954;
+            font-size: 16px;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        .user-info {
+            background: #f5f5f5;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 30px;
+            display: none;
+        }
+
+        .user-info.visible {
+            display: block;
+        }
+
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #1DB954;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-name {
+            font-size: 24px;
+            color: #191414;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .user-email {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .user-id {
+            font-size: 12px;
+            color: #999;
+            font-family: 'Courier New', monospace;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 14px 40px;
+            border-radius: 50px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            margin: 10px;
+        }
+
+        .button-primary {
+            background: #1DB954;
+            color: white;
+        }
+
+        .button-primary:hover {
+            background: #1ed760;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(29, 185, 84, 0.4);
+        }
+
+        .button-secondary {
+            background: #f5f5f5;
+            color: #191414;
+            border: 2px solid #1DB954;
+        }
+
+        .button-secondary:hover {
+            background: #1DB954;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(29, 185, 84, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .login-container {
+            display: none;
+        }
+
+        .login-container.visible {
+            display: block;
+        }
+
+        .login-text {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .spotify-icon {
+            display: inline-block;
+            margin-right: 10px;
+        }
+
+        .logout-btn {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .logout-btn:hover {
+            background: #ff5252;
+            box-shadow: 0 8px 24px rgba(255, 107, 107, 0.3);
+        }
+
+        .loading {
+            display: none;
+            color: #666;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+
+        .loading.visible {
+            display: block;
+        }
+
+        .loader {
+            border: 3px solid #f5f5f5;
+            border-top: 3px solid #1DB954;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #999;
+        }
+
+        .error {
+            background: #ffe5e5;
+            color: #d32f2f;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .error.visible {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🎵</div>
+        <h1>SpotifyCharts</h1>
+        <p class="subtitle">Descubra seus top tracks</p>
+
+        <div class="error" id="error"></div>
+
+        <!-- Seção de usuário autenticado -->
+        <div class="user-info" id="userInfo">
+            <div class="user-avatar" id="userInitial">S</div>
+            <div class="user-name" id="userName">Usuário Spotify</div>
+            <div class="user-email" id="userEmail">email@example.com</div>
+            <div class="user-id" id="userId">spotify_id</div>
+            <div style="margin-top: 20px;">
+                <button class="button button-primary" onclick="goToDashboard()">
+                    📊 Ver Estatísticas
+                </button>
+            </div>
+            <button class="button button-secondary logout-btn" onclick="logout()">
+                🚪 Logout
+            </button>
+        </div>
+
+        <!-- Seção de login -->
+        <div class="login-container" id="loginContainer">
+            <p class="login-text">Faça login com sua conta Spotify para começar</p>
+            <button class="button button-primary" onclick="login()">
+                <span class="spotify-icon">🎧</span>Login com Spotify
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="loader"></div>
+            <p>Carregando...</p>
+        </div>
+
+        <div class="footer">
+            <p>SpotifyCharts © 2026 | Construído com ❤️ para Spotify lovers</p>
+        </div>
+    </div>
+
+    <script>
+        // Função para fazer login
+        function login() {
+            window.location.href = '/api/auth/login/';
+        }
+
+        // Função para fazer logout
+        async function logout() {
+            showLoading(true);
+            try {
+                const response = await fetch('/api/auth/logout/', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    // Recarregar a página para mostrar o login
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                } else {
+                    showError('Erro ao fazer logout');
+                    showLoading(false);
+                }
+            } catch (error) {
+                console.error('Logout error:', error);
+                showError('Erro ao fazer logout: ' + error.message);
+                showLoading(false);
+            }
+        }
+
+        // Função para ir ao dashboard
+        function goToDashboard() {
+            alert('📊 Dashboard em desenvolvimento!');
+        }
+
+        // Mostrar/esconder loading
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('visible');
+            } else {
+                loading.classList.remove('visible');
+            }
+        }
+
+        // Mostrar erro
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.add('visible');
+            setTimeout(() => {
+                error.classList.remove('visible');
+            }, 5000);
+        }
+
+        // Carregar informações do usuário na inicialização
+        async function loadUserInfo() {
+            showLoading(true);
+            try {
+                const response = await fetch('/', {
+                    credentials: 'include',
+                });
+
+                const data = await response.json();
+
+                if (data.authenticated && data.user) {
+                    // Mostrar informações do usuário
+                    showUserInfo(data.user);
+                } else {
+                    // Mostrar login
+                    showLoginContainer();
+                }
+            } catch (error) {
+                console.error('Error loading user info:', error);
+                showLoginContainer();
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Mostrar informações do usuário
+        function showUserInfo(user) {
+            const userInfo = document.getElementById('userInfo');
+            const loginContainer = document.getElementById('loginContainer');
+
+            document.getElementById('userName').textContent = user.display_name || 'Usuário';
+            document.getElementById('userEmail').textContent = user.email || 'Sem email';
+            document.getElementById('userId').textContent = `ID: ${user.spotify_id}`;
+
+            // Gerar avatar com inicial
+            const initial = (user.display_name || user.spotify_id).charAt(0).toUpperCase();
+            document.getElementById('userInitial').textContent = initial;
+
+            userInfo.classList.add('visible');
+            loginContainer.classList.remove('visible');
+        }
+
+        // Mostrar container de login
+        function showLoginContainer() {
+            const userInfo = document.getElementById('userInfo');
+            const loginContainer = document.getElementById('loginContainer');
+
+            userInfo.classList.remove('visible');
+            loginContainer.classList.add('visible');
+        }
+
+        // Carregar informações ao abrir a página
+        document.addEventListener('DOMContentLoaded', loadUserInfo);
+    </script>
+</body>
+</html>
