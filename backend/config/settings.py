@@ -1,8 +1,17 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Minimal settings for local development
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load environment variables from .env file (root or backend directory)
+root_env = BASE_DIR.parent / '.env'
+backend_env = BASE_DIR / '.env'
+if root_env.exists():
+    load_dotenv(root_env)
+elif backend_env.exists():
+    load_dotenv(backend_env)
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me')
 

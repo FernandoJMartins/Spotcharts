@@ -83,6 +83,10 @@ class AuthCallbackView(APIView):
         refresh_token_enc = token_data.get('refresh_token_encrypted')
         expires_in = token_data.get('expires_in')
 
+        # Validate that refresh token was successfully encrypted
+        if not refresh_token_enc:
+            return Response({'detail': 'token_encryption_failed'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
         # Fetch user profile from Spotify
         me = None
         if access_token:

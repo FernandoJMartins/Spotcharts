@@ -4,9 +4,9 @@ services:
     image: postgres:15
     restart: unless-stopped
     environment:
-      POSTGRES_USER: spotifycharts
-      POSTGRES_PASSWORD: spotifycharts
-      POSTGRES_DB: spotifycharts
+      POSTGRES_USER: ${DB_USER:-spotifycharts}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-spotifycharts}
+      POSTGRES_DB: ${DB_NAME:-spotifycharts}
     volumes:
       - db_data:/var/lib/postgresql/data
     networks:
@@ -20,6 +20,8 @@ services:
       - db
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql://${DB_USER:-spotifycharts}:${DB_PASSWORD:-spotifycharts}@db:5432/${DB_NAME:-spotifycharts}
     ports:
       - "8000:8000"
     networks:

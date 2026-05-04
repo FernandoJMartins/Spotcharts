@@ -30,12 +30,8 @@ class SpotifyClient:
         data = resp.json()
         # If Spotify returns a refresh_token, encrypt it for safe storage
         if 'refresh_token' in data and data.get('refresh_token'):
-            try:
-                encrypted = encrypt_str(data.pop('refresh_token'))
-                data['refresh_token_encrypted'] = encrypted
-            except Exception:
-                # If encryption fails, propagate original response (fail-open)
-                pass
+            encrypted = encrypt_str(data.pop('refresh_token'))
+            data['refresh_token_encrypted'] = encrypted
         return data
 
     def refresh_token(self, refresh_token: str):
@@ -50,11 +46,8 @@ class SpotifyClient:
         data = resp.json()
         # If a new refresh_token is issued, encrypt it
         if 'refresh_token' in data and data.get('refresh_token'):
-            try:
-                encrypted = encrypt_str(data.pop('refresh_token'))
-                data['refresh_token_encrypted'] = encrypted
-            except Exception:
-                pass
+            encrypted = encrypt_str(data.pop('refresh_token'))
+            data['refresh_token_encrypted'] = encrypted
         return data
 
     def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20):
