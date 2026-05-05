@@ -1,11 +1,10 @@
-// src/components/header/Header.jsx
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Menu, X, Music } from "lucide-react";
 import { clsx } from "clsx";
 
 const useAuth = () => {
-  return { isAuthenticated: false }; // substitua pelo seu hook real
+  return { isAuthenticated: false }; 
 };
 
 export default function Header() {
@@ -27,7 +26,6 @@ export default function Header() {
     ...(isAuthenticated ? protectedLinks : []),
   ];
 
-  // Estilo base + condicional usando clsx (sem twMerge/cva)
   const linkClass = ({ isActive }) =>
     clsx(
       "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200",
@@ -54,7 +52,6 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Mobile toggle */}
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
             className="md:hidden p-2 text-gray-300 hover:text-white transition-colors"
@@ -65,7 +62,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile menu */}
       {mobileOpen && (
         <div className="md:hidden bg-[#181818] border-t border-white/5 px-4 pb-4">
           <nav className="flex flex-col gap-1 pt-2">
