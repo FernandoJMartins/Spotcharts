@@ -19,7 +19,7 @@ export default function App(){
       <h1 className="text-2xl font-bold">SpotifyCharts (dev)</h1>
       {me ? (
         <div>
-          <p>Signed in as {me.display_name || me.email || me.spotify_id}</p>
+          <p>Signed in as lol {me.display_name || me.email || me.spotify_id}</p>
           <button onClick={()=>fetch('/api/auth/logout/', {method: 'POST', credentials: 'include'})}>Logout</button>
         </div>
       ) : (
