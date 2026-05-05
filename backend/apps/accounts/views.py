@@ -141,7 +141,7 @@ class AuthCallbackView(APIView):
             value=token,
             httponly=True,
             secure=secure_flag,
-            samesite='Lax',
+            samesite='Strict',
             path='/',
             max_age=jwt_exp_days * 24 * 3600,
         )
@@ -179,7 +179,7 @@ class LoginView(APIView):
         resp = Response(status=status.HTTP_302_FOUND)
         resp['Location'] = url
         # store state for verification in callback
-        resp.set_cookie('spotify_auth_state', state, httponly=True, secure=secure_flag, samesite='Lax', path='/', max_age=300)
+        resp.set_cookie('spotify_auth_state', state, httponly=True, secure=secure_flag, samesite='Strict', path='/', max_age=300)
         return resp
 
 
