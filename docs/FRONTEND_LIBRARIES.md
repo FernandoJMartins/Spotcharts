@@ -37,7 +37,7 @@ Este registro detalha as dependências do projeto, suas versões fixas e os link
 ## Visualização de Dados
 
 * [**Recharts (3.8.1)**](https://recharts.org/): Biblioteca de gráficos baseada em componentes React.
-
+* Pode-se ficar em aberto se houve complexidade.
 ---
 
 **Nota:** Mantenha as versões fixas conforme listado para evitar incompatibilidades. Para novas instalações ou atualizações, consulte a equipe de arquitetura.
