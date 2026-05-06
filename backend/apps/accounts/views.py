@@ -261,3 +261,80 @@ class MeView(APIView):
             'last_sync': user.last_sync,
         }
         return Response(data)
+
+
+class TopTracksView(APIView):
+    """Return a minimal list of top tracks for the authenticated user."""
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Prefer a token refreshed by middleware; otherwise refresh now.
+        access_token = getattr(request, 'spotify_access_token', None)
+
+        if not access_token:
+            if not getattr(user, 'refresh_token_encrypted', None):
+                return Response({'detail': 'no_refresh_token'}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                refresh_token = decrypt_str(user.refresh_token_encrypted)
+            except Exception:
+                return Response({'detail': 'invalid_refresh_token_storage'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            client_id = os.environ.get('SPOTIFY_CLIENT_ID')
+            client_secret = os.environ.get('SPOTIFY_CLIENT_SECRET')
+            redirect_uri = os.environ.get('SPOTIFY_REDIRECT_URI')
+            if not all([client_id, client_secret, redirect_uri]):
+                return Response({'detail': 'server not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            sc = SpotifyClient(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
+            try:
+                data = sc.refresh_token(refresh_token)
+            except Exception as exc:
+                return Response({'detail': 'refresh_failed', 'error': str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+            access_token = data.get('access_token')
+            if not access_token:
+                return Response({'detail': 'no_access_token'}, status=status.HTTP_502_BAD_GATEWAY)
+
+            new_refresh_enc = data.get('refresh_token_encrypted')
+            expires_in = data.get('expires_in')
+
+            if new_refresh_enc:
+                user.refresh_token_encrypted = new_refresh_enc
+            if expires_in:
+                user.token_expires_at = timezone.now() + timezone.timedelta(seconds=expires_in)
+            user.save()
+
+        period = request.GET.get('period', 'short')
+        limit_raw = request.GET.get('limit', '10')
+        try:
+            limit = int(limit_raw)
+        except Exception:
+            limit = 10
+        limit = max(1, min(limit, 50))
+
+        client_id = os.environ.get('SPOTIFY_CLIENT_ID')
+        client_secret = os.environ.get('SPOTIFY_CLIENT_SECRET')
+        redirect_uri = os.environ.get('SPOTIFY_REDIRECT_URI')
+        if not all([client_id, client_secret, redirect_uri]):
+            return Response({'detail': 'server not configured'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        sc = SpotifyClient(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri)
+        try:
+            payload = sc.get_top_tracks(access_token, period=period, limit=limit)
+        except Exception as exc:
+            return Response({'detail': 'spotify_api_failed', 'error': str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+
+        items = []
+        for track in payload.get('items', []) or []:
+            items.append({
+                'id': track.get('id'),
+                'name': track.get('name'),
+                'artists': [artist.get('name') for artist in track.get('artists', [])],
+                'uri': track.get('uri'),
+            })
+
+        return Response({'count': len(items), 'items': items})

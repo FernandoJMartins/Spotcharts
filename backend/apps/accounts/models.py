@@ -12,3 +12,7 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"UserProfile({self.spotify_id})"
+
+    @property
+    def is_authenticated(self):
+        return True
