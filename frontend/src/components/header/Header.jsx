@@ -1,50 +1,76 @@
-import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { Menu, X, Music } from "lucide-react";
-import { clsx } from "clsx";
-
-const useAuth = () => {
-  return { isAuthenticated: false }; 
-};
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check auth status
+    fetch("/api/auth/me/", {
+      credentials: "include",
+    })
+      .then((res) => {
+        if (res.ok) {
+          return res.json();
+        }
+        throw new Error("Not authenticated");
+      })
+      .then((data) => {
+        setIsAuthenticated(true);
+        setUser(data);
+      })
+      .catch(() => {
+        setIsAuthenticated(false);
+        setUser(null);
+      });
+  }, []);
+
+  const handleLogout = async () => {
+    await fetch("/api/auth/logout/", {
+      method: "POST",
+      credentials: "include",
+    });
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate("/login");
+  };
 
   const publicLinks = [
     { to: "/", label: "Início" },
-    { to: "/login", label: "Entrar" },
-    { to: "/registro", label: "Registrar" },
   ];
 
   const protectedLinks = [
     { to: "/graficos", label: "Gráficos" },
   ];
 
-  const allLinks = [
-    ...publicLinks,
-    ...(isAuthenticated ? protectedLinks : []),
-  ];
+  const allLinks = isAuthenticated
+    ? [...publicLinks, ...protectedLinks]
+    : [...publicLinks, { to: "/login", label: "Entrar" }];
 
-  const linkClass = ({ isActive }) =>
-    clsx(
-      "px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200",
-      isActive
-        ? "bg-white/10 text-white"
-        : "text-gray-300 hover:text-white hover:bg-white/5"
-    );
+  const linkClass = ({ isActive }) => {
+    const base = "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200";
+    return isActive
+      ? `${base} bg-[var(--color-spotify-green)] text-black`
+      : `${base} text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]`;
+  };
 
   return (
-    <header className="bg-[#121212] border-b border-white/5 sticky top-0 z-50">
+    <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)] border-b border-[var(--color-border-subtle)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <NavLink to="/" className="flex items-center gap-2 text-white">
-            <Music className="h-8 w-8 text-[#1DB954]" />
-            <span className="text-xl font-bold tracking-tight">SportifyCharts</span>
+          {/* Logo */}
+          <NavLink to="/" className="flex items-center gap-2">
+            <div className="text-[var(--color-spotify-green)] font-bold text-lg">
+              ◉ CHARTS
+            </div>
           </NavLink>
 
-          {/* Desktop */}
-          <nav className="hidden md:flex items-center gap-1">
+          {/* Desktop Nav */}
+          <nav className="hidden md:flex items-center gap-2">
             {allLinks.map((link) => (
               <NavLink key={link.to} to={link.to} className={linkClass}>
                 {link.label}
@@ -52,19 +78,39 @@ export default function Header() {
             ))}
           </nav>
 
-          <button
-            onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden p-2 text-gray-300 hover:text-white transition-colors"
-            aria-label="Abrir menu"
-          >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Right Side */}
+          <div className="flex items-center gap-4">
+            {isAuthenticated && user && (
+              <div className="hidden sm:flex items-center gap-3">
+                <span className="text-sm text-[var(--color-text-secondary)]">
+                  {user.display_name || user.spotify_id}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 hover:bg-[var(--color-surface)] rounded-lg transition-colors"
+                  title="Sair"
+                >
+                  <LogOut size={18} className="text-[var(--color-text-secondary)]" />
+                </button>
+              </div>
+            )}
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="md:hidden p-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
+              aria-label="Menu"
+            >
+              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
       </div>
 
+      {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="md:hidden bg-[#181818] border-t border-white/5 px-4 pb-4">
-          <nav className="flex flex-col gap-1 pt-2">
+        <div className="md:hidden bg-[var(--color-surface)] border-t border-[var(--color-border-subtle)]">
+          <nav className="flex flex-col gap-1 p-4">
             {allLinks.map((link) => (
               <NavLink
                 key={link.to}
@@ -75,6 +121,17 @@ export default function Header() {
                 {link.label}
               </NavLink>
             ))}
+            {isAuthenticated && (
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setMobileOpen(false);
+                }}
+                className="w-full text-left px-4 py-2 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors rounded-lg hover:bg-[var(--color-bg-elevated)]"
+              >
+                Sair
+              </button>
+            )}
           </nav>
         </div>
       )}
