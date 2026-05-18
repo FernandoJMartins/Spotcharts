@@ -85,9 +85,21 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
 ]
-# Allow CORS for ngrok URLs (development)
-if "ngrok" in os.environ.get('FRONTEND_URL', ''):
-    CORS_ALLOWED_ORIGINS.append(os.environ.get('FRONTEND_URL', '').rstrip('/'))
+# Allow CORS for FRONTEND_URL (ngrok/vercel/custom)
+frontend_url = os.environ.get('FRONTEND_URL', '').rstrip('/')
+if frontend_url:
+    CORS_ALLOWED_ORIGINS.append(frontend_url)
+
+# Allow all Vercel preview domains when frontend is hosted on vercel.app
+if "vercel.app" in frontend_url:
+    CORS_ALLOWED_ORIGIN_REGEXES = [r"^https://.*\.vercel\.app$"]
+
+# CSRF trusted origins for cross-site POSTs (e.g. logout)
+CSRF_TRUSTED_ORIGINS = []
+if frontend_url.startswith("https://"):
+    CSRF_TRUSTED_ORIGINS.append(frontend_url)
+if "vercel.app" in frontend_url:
+    CSRF_TRUSTED_ORIGINS.append("https://*.vercel.app")
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [

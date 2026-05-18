@@ -135,13 +135,15 @@ class AuthCallbackView(APIView):
             resp = Response(response_data)
 
         # Cookie attributes
-        secure_flag = not settings.DEBUG
+        cookie_samesite_raw = os.environ.get('COOKIE_SAMESITE', 'Lax').strip()
+        cookie_samesite = 'None' if cookie_samesite_raw.lower() == 'none' else cookie_samesite_raw.capitalize()
+        secure_flag = True if cookie_samesite == 'None' else not settings.DEBUG
         resp.set_cookie(
             key='session',
             value=token,
             httponly=True,
             secure=secure_flag,
-            samesite='Lax',
+            samesite=cookie_samesite,
             path='/',
             max_age=jwt_exp_days * 24 * 3600,
         )
@@ -175,11 +177,13 @@ class LoginView(APIView):
         }
         url = f"https://accounts.spotify.com/authorize?{urlencode(params)}"
 
-        secure_flag = not settings.DEBUG
+        cookie_samesite_raw = os.environ.get('COOKIE_SAMESITE', 'Lax').strip()
+        cookie_samesite = 'None' if cookie_samesite_raw.lower() == 'none' else cookie_samesite_raw.capitalize()
+        secure_flag = True if cookie_samesite == 'None' else not settings.DEBUG
         resp = Response(status=status.HTTP_302_FOUND)
         resp['Location'] = url
         # store state for verification in callback
-        resp.set_cookie('spotify_auth_state', state, httponly=True, secure=secure_flag, samesite='Lax', path='/', max_age=300)
+        resp.set_cookie('spotify_auth_state', state, httponly=True, secure=secure_flag, samesite=cookie_samesite, path='/', max_age=300)
         return resp
 
 
