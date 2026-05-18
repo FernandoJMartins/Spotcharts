@@ -141,7 +141,7 @@ class AuthCallbackView(APIView):
             value=token,
             httponly=True,
             secure=secure_flag,
-            samesite='Strict',
+            samesite='Lax',
             path='/',
             max_age=jwt_exp_days * 24 * 3600,
         )

@@ -8,18 +8,23 @@ export default function PrivateRoute({ children }) {
 
   useEffect(() => {
     // Verifica se o usuário está autenticado chamando /api/auth/me/
-    fetch("/api/auth/me/", {
-      credentials: "include", // Envia o cookie session
-    })
-      .then((res) => {
+    // Executa apenas uma vez quando monta
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me/", {
+          credentials: "include",
+        });
         setIsAuthenticated(res.ok);
-        setLoading(false);
-      })
-      .catch(() => {
+      } catch (error) {
+        console.error("Auth check error:", error);
         setIsAuthenticated(false);
+      } finally {
         setLoading(false);
-      });
-  }, []);
+      }
+    };
+
+    checkAuth();
+  }, []); // Dependência vazia = executa uma vez
 
   if (loading) {
     return <div>Carregando...</div>;

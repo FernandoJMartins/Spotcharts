@@ -9,24 +9,29 @@ export default function Header() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check auth status
-    fetch("/api/auth/me/", {
-      credentials: "include",
-    })
-      .then((res) => {
+    // Check auth status apenas uma vez
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/auth/me/", {
+          credentials: "include",
+        });
+        
         if (res.ok) {
-          return res.json();
+          const data = await res.json();
+          setIsAuthenticated(true);
+          setUser(data);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
         }
-        throw new Error("Not authenticated");
-      })
-      .then((data) => {
-        setIsAuthenticated(true);
-        setUser(data);
-      })
-      .catch(() => {
+      } catch (error) {
+        console.error("Auth check error:", error);
         setIsAuthenticated(false);
         setUser(null);
-      });
+      }
+    };
+
+    checkAuth();
   }, []);
 
   const handleLogout = async () => {
