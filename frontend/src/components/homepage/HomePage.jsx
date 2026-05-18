@@ -62,13 +62,21 @@ export default function HomePage() {
   // ============ USUARIO LOGADO - DASHBOARD ============
   if (isAuthenticated && user) {
     return (
-      <div className="bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
-        <div className="max-w-6xl mx-auto">
+      <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
+        <div className="hero-ornaments" aria-hidden="true">
+          <div className="hero-orb orb-1" />
+          <div className="hero-orb orb-2" />
+          <div className="hero-grid" />
+        </div>
+        <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
           {/* Header Section */}
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mb-12">
-            <div>
-              <h1 className="text-5xl font-extrabold mb-2">
-                Bem-vindo, <span className="text-[var(--color-spotify-green)]">{user.display_name}</span>
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
+            <div className="flex flex-col items-center">
+              <h1
+                className="text-5xl font-extrabold mb-2 reveal"
+                style={{ "--delay": "0.05s" }}
+              >
+                Bem-vindo, <span className="text-[var(--color-spotify-green)] glow-text">{user.display_name}</span>
               </h1>
               <p className="text-[var(--color-text-secondary)] text-lg">
                 Spotify ID: <span className="font-mono text-sm">{user.spotify_id}</span>
@@ -81,7 +89,8 @@ export default function HomePage() {
             </div>
             <button
               onClick={handleLogout}
-              className="btn-secondary flex items-center gap-2 px-6 py-3"
+              className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
+              style={{ "--delay": "0.12s" }}
             >
               <LogOut size={18} />
               Sair
@@ -89,9 +98,9 @@ export default function HomePage() {
           </div>
 
           {/* User Stats */}
-          <div className="grid md:grid-cols-3 gap-6 mb-12">
+          <div className="w-full max-w-5xl mx-auto grid md:grid-cols-3 gap-6 mb-12 justify-items-center">
             {/* User Info Card */}
-            <div className="card">
+            <div className="card reveal-scale w-full max-w-sm" style={{ "--delay": "0.12s" }}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Perfil</h3>
                 <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
@@ -105,7 +114,9 @@ export default function HomePage() {
             </div>
 
             {/* Top Tracks Card */}
-            <div className="card cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors"
+            <div
+              className="card cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.2s" }}
               onClick={() => navigate("/graficos")}
             >
               <div className="flex items-center justify-between mb-4">
@@ -121,7 +132,7 @@ export default function HomePage() {
             </div>
 
             {/* Last Sync Card */}
-            <div className="card">
+            <div className="card reveal-scale w-full max-w-sm" style={{ "--delay": "0.28s" }}>
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-semibold">Sincronização</h3>
                 <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
@@ -141,7 +152,9 @@ export default function HomePage() {
           </div>
 
           {/* Main CTA */}
-          <div className="bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center">
+          <div className="w-full max-w-4xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
+            style={{ "--delay": "0.35s" }}
+          >
             <h2 className="text-3xl font-bold mb-4">Pronto para explorar?</h2>
             <p className="text-[var(--color-text-secondary)] mb-6 max-w-md mx-auto">
               Visualize seus top tracks, artistas, tendências e muito mais em gráficos interativos.
@@ -160,22 +173,27 @@ export default function HomePage() {
 
   // ============ NAO LOGADO - LANDING PAGE ============
   return (
-    <div className="bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
+    <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
       {/* Hero */}
-      <section className="flex-1 flex items-center justify-center px-4 py-20">
-        <div className="max-w-2xl w-full text-center">
-          <h1 className="text-7xl font-extrabold mb-6 leading-tight">
+      <section className="relative flex-1 flex items-center justify-center px-4 py-20">
+        <div className="hero-ornaments" aria-hidden="true">
+          <div className="hero-orb orb-1" />
+          <div className="hero-orb orb-2" />
+          <div className="hero-grid" />
+        </div>
+        <div className="max-w-2xl w-full text-center relative z-10">
+          <h1 className="text-7xl font-extrabold mb-6 leading-tight reveal">
             Seus dados
             <br />
-            <span className="text-[var(--color-spotify-green)]">com clareza visual.</span>
+            <span className="text-[var(--color-spotify-green)] glow-text">com clareza visual.</span>
           </h1>
 
-          <p className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed">
+          <p className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed reveal" style={{ "--delay": "0.08s" }}>
             Conecte sua conta Spotify e transforme seus top tracks, artistas e tendências
             em visualizações impressionantes. Análise profunda, design elegante.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center reveal" style={{ "--delay": "0.16s" }}>
             <button
               onClick={() => navigate("/login")}
               className="btn-primary px-8 py-4 text-lg"
@@ -190,13 +208,13 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="bg-[var(--color-surface)] py-20 px-4">
+      <section id="features" className="bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg mx-4 p-20">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-5xl font-bold text-center mb-16">
+          <h2 className="text-5xl font-bold text-center mb-16 reveal" style={{ "--delay": "0.05s" }}>
             Recursos Principais
           </h2>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="flex gap-8">
             {[
               {
                 icon: BarChart3,
@@ -216,7 +234,7 @@ export default function HomePage() {
             ].map((feature, idx) => {
               const Icon = feature.icon;
               return (
-                <div key={idx} className="card">
+                <div key={idx} className="card reveal-scale" style={{ "--delay": `${0.1 + idx * 0.08}s` }}>
                   <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
                     <Icon className="text-[var(--color-spotify-green)]" size={24} />
                   </div>
@@ -234,16 +252,17 @@ export default function HomePage() {
       {/* CTA Section */}
       <section className="bg-[var(--color-bg-elevated)] py-20 px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6">
+          <h2 className="text-4xl font-bold mb-6 reveal" style={{ "--delay": "0.05s" }}>
             Pronto para explorar seus dados?
           </h2>
-          <p className="text-lg text-[var(--color-text-secondary)] mb-8">
+          <p className="text-lg text-[var(--color-text-secondary)] mb-8 reveal" style={{ "--delay": "0.12s" }}>
             Conecte com Spotify e comece agora. É rápido e seguro.
           </p>
 
           <button
             onClick={() => navigate("/login")}
-            className="btn-primary px-8 py-4 text-lg"
+            className="btn-primary px-8 py-4 text-lg reveal"
+            style={{ "--delay": "0.2s" }}
           >
             Conectar com Spotify
           </button>
