@@ -22,8 +22,11 @@ services:
       - .env
     environment:
       - DATABASE_URL=postgresql://${DB_USER:-spotifycharts}:${DB_PASSWORD:-spotifycharts}@db:5432/${DB_NAME:-spotifycharts}
+    volumes:
+      - ./backend:/app
     ports:
       - "8000:8000"
+    command: python manage.py runserver 0.0.0.0:8000
     networks:
       - app-network
 
