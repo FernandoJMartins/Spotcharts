@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, Zap, LogOut } from "lucide-react";
+import { withApiBase } from "../../utils/apiBase";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -12,7 +13,7 @@ export default function HomePage() {
     // Função para checar autenticação
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me/", {
+        const res = await fetch(withApiBase("/api/auth/me/"), {
           credentials: "include",
         });
         
@@ -37,7 +38,7 @@ export default function HomePage() {
   }, []); // Executa apenas uma vez quando monta
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout/", {
+    await fetch(withApiBase("/api/auth/logout/"), {
       method: "POST",
       credentials: "include",
     });

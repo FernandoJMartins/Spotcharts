@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
+import { withApiBase } from "../../utils/apiBase";
 
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -12,7 +13,7 @@ export default function Header() {
     // Check auth status apenas uma vez
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me/", {
+        const res = await fetch(withApiBase("/api/auth/me/"), {
           credentials: "include",
         });
         
@@ -35,7 +36,7 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    await fetch("/api/auth/logout/", {
+    await fetch(withApiBase("/api/auth/logout/"), {
       method: "POST",
       credentials: "include",
     });
