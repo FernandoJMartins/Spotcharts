@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       host: true,
       port: 3000,
       strictPort: true,
-      allowedHosts: ['.ngrok-free.app', 'localhost', '127.0.0.1', 'https://spotcharts.vercel.app'],
+      allowedHosts: ['.ngrok-free.app', 'localhost', '127.0.0.1', '.vercel.app'],
       proxy: {
         '/api': {
           target: backendUrl,
