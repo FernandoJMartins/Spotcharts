@@ -2,6 +2,21 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+
+MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+
+    'apps.accounts.middleware.SpotifyTokenAutoRefreshMiddleware',
+]
+
+
 # Minimal settings for local development
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -17,7 +32,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -31,16 +46,6 @@ INSTALLED_APPS = [
     'apps.accounts',
 ]
 
-MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'apps.accounts.middleware.SpotifyTokenAutoRefreshMiddleware',
-]
 
 ROOT_URLCONF = 'config.urls'
 
@@ -113,3 +118,11 @@ CORS_ALLOW_HEADERS = [
     'x-csrftoken',
     'x-requested-with',
 ]
+
+
+
+SESSION_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+CSRF_COOKIE_SECURE = True

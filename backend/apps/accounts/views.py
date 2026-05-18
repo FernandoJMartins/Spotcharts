@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 from django.utils import timezone
 from django.conf import settings
+from django.contrib.auth import get_user_model, login as django_login, logout as django_logout
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -22,6 +23,15 @@ class JWTAuthentication(BaseAuthentication):
     """Authenticate requests using JWT from cookie `session` or Authorization header."""
 
     def authenticate(self, request):
+        # 0) Prefer Django session user when available
+        django_user = getattr(request, 'user', None)
+        if django_user is not None and getattr(django_user, 'is_authenticated', False):
+            try:
+                user = UserProfile.objects.get(spotify_id=django_user.username)
+                return (user, None)
+            except UserProfile.DoesNotExist:
+                return None
+
         token = None
         # 1) Try cookie
         token = request.COOKIES.get('session')
@@ -113,6 +123,28 @@ class AuthCallbackView(APIView):
                 'token_expires_at': timezone.now() + timezone.timedelta(seconds=expires_in) if expires_in else None,
             }
         )
+
+        # Create or update Django auth user and log in via session
+        User = get_user_model()
+        auth_user, _ = User.objects.get_or_create(
+            username=spotify_id,
+            defaults={
+                'email': email or '',
+                'first_name': display_name or '',
+            },
+        )
+        # Keep auth user info in sync
+        updated = False
+        if email and auth_user.email != email:
+            auth_user.email = email
+            updated = True
+        if display_name and auth_user.first_name != display_name:
+            auth_user.first_name = display_name
+            updated = True
+        if updated:
+            auth_user.save(update_fields=['email', 'first_name'])
+
+        django_login(request, auth_user, backend='django.contrib.auth.backends.ModelBackend')
 
         # Issue a JWT for the user and set it as HttpOnly cookie
         jwt_secret = os.environ.get('JWT_SECRET', settings.SECRET_KEY)
@@ -244,6 +276,9 @@ class LogoutView(APIView):
             user.refresh_token_encrypted = None
             user.token_expires_at = None
             user.save()
+
+        # Clear Django session
+        django_logout(request)
 
         resp = Response({'detail': 'logged_out'}, status=status.HTTP_200_OK)
         # clear session cookie
