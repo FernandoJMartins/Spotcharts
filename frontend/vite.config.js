@@ -4,7 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const backendUrl = env.VITE_API_BASE || env.VITE_BACKEND_URL || 'http://backend:8000'
+  const backendUrl = env.VITE_API_BASE || env.VITE_BACKEND_URL || 'https://640e-2804-1b0-f440-9695-155a-9bf5-54c-e00.ngrok-free.app/'
 
   return {
     plugins: [react(), tailwindcss()],

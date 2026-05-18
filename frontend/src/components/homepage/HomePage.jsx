@@ -7,26 +7,40 @@ export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Função para checar autenticação
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
     const checkAuth = async () => {
       try {
         const res = await fetch(withApiBase("/api/auth/me/"), {
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setIsAuthenticated(true);
-          setUser(data);
-        } else {
+
+        if (!res.ok) {
+          localStorage.removeItem("token");
           setIsAuthenticated(false);
           setUser(null);
+          return;
         }
+
+        const data = await res.json();
+
+        setIsAuthenticated(true);
+        setUser(data);
       } catch (error) {
         console.error("Auth check error:", error);
+
+        localStorage.removeItem("token");
         setIsAuthenticated(false);
         setUser(null);
       } finally {
@@ -35,15 +49,27 @@ export default function HomePage() {
     };
 
     checkAuth();
-  }, []); // Executa apenas uma vez quando monta
+  }, []);
 
   const handleLogout = async () => {
-    await fetch(withApiBase("/api/auth/logout/"), {
-      method: "POST",
-      credentials: "include",
-    });
+    const token = localStorage.getItem("token");
+
+    try {
+      await fetch(withApiBase("/api/auth/logout/"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    localStorage.removeItem("token");
+
     setIsAuthenticated(false);
     setUser(null);
+
     navigate("/");
   };
 
@@ -54,13 +80,16 @@ export default function HomePage() {
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
             <div className="w-8 h-8 border-3 border-[var(--color-spotify-green)] border-t-transparent rounded-full animate-spin"></div>
           </div>
-          <p className="text-[var(--color-text-secondary)]">Carregando...</p>
+
+          <p className="text-[var(--color-text-secondary)]">
+            Carregando...
+          </p>
         </div>
       </div>
     );
   }
 
-  // ============ USUARIO LOGADO - DASHBOARD ============
+  // ================= LOGADO =================
   if (isAuthenticated && user) {
     return (
       <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
@@ -69,25 +98,35 @@ export default function HomePage() {
           <div className="hero-orb orb-2" />
           <div className="hero-grid" />
         </div>
+
         <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
-          {/* Header Section */}
+          {/* Header */}
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
             <div className="flex flex-col items-center">
               <h1
                 className="text-5xl font-extrabold mb-2 reveal"
                 style={{ "--delay": "0.05s" }}
               >
-                Bem-vindo, <span className="text-[var(--color-spotify-green)] glow-text">{user.display_name}</span>
+                Bem-vindo,{" "}
+                <span className="text-[var(--color-spotify-green)] glow-text">
+                  {user.display_name}
+                </span>
               </h1>
+
               <p className="text-[var(--color-text-secondary)] text-lg">
-                Spotify ID: <span className="font-mono text-sm">{user.spotify_id}</span>
+                Spotify ID:{" "}
+                <span className="font-mono text-sm">
+                  {user.spotify_id}
+                </span>
               </p>
+
               {user.email && (
                 <p className="text-[var(--color-text-secondary)] text-lg mt-1">
                   {user.email}
                 </p>
               )}
             </div>
+
             <button
               onClick={handleLogout}
               className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
@@ -98,68 +137,109 @@ export default function HomePage() {
             </button>
           </div>
 
-          {/* User Stats */}
+          {/* Cards */}
           <div className="w-full max-w-5xl mx-auto grid md:grid-cols-3 gap-6 mb-12 justify-items-center">
-            {/* User Info Card */}
-            <div className="card reveal-scale w-full max-w-sm" style={{ "--delay": "0.12s" }}>
+            {/* Perfil */}
+            <div
+              className="card reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.12s" }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Perfil</h3>
+                <h3 className="text-lg font-semibold">
+                  Perfil
+                </h3>
+
                 <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <BarChart3 className="text-[var(--color-spotify-green)]" size={20} />
+                  <BarChart3
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-2">{user.display_name}</p>
+
+              <p className="text-3xl font-bold mb-2">
+                {user.display_name}
+              </p>
+
               <p className="text-[var(--color-text-secondary)] text-sm">
                 Conta Spotify ativa
               </p>
             </div>
 
-            {/* Top Tracks Card */}
+            {/* Tracks */}
             <div
               className="card cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale w-full max-w-sm"
               style={{ "--delay": "0.2s" }}
               onClick={() => navigate("/graficos")}
             >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Top Faixas</h3>
+                <h3 className="text-lg font-semibold">
+                  Top Faixas
+                </h3>
+
                 <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <TrendingUp className="text-[var(--color-spotify-green)]" size={20} />
+                  <TrendingUp
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
                 </div>
               </div>
-              <p className="text-3xl font-bold mb-2">Visualizar</p>
+
+              <p className="text-3xl font-bold mb-2">
+                Visualizar
+              </p>
+
               <p className="text-[var(--color-text-secondary)] text-sm">
                 Suas músicas mais ouvidas
               </p>
             </div>
 
-            {/* Last Sync Card */}
-            <div className="card reveal-scale w-full max-w-sm" style={{ "--delay": "0.28s" }}>
+            {/* Sync */}
+            <div
+              className="card reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.28s" }}
+            >
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Sincronização</h3>
+                <h3 className="text-lg font-semibold">
+                  Sincronização
+                </h3>
+
                 <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <Zap className="text-[var(--color-spotify-green)]" size={20} />
+                  <Zap
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
                 </div>
               </div>
+
               <p className="text-3xl font-bold mb-2">
                 {user.last_sync ? "✓" : "−"}
               </p>
+
               <p className="text-[var(--color-text-secondary)] text-sm">
                 {user.last_sync
-                  ? `Última atualização: ${new Date(user.last_sync).toLocaleDateString("pt-BR")}`
-                  : "Nunca sincronizado"
-                }
+                  ? `Última atualização: ${new Date(
+                      user.last_sync
+                    ).toLocaleDateString("pt-BR")}`
+                  : "Nunca sincronizado"}
               </p>
             </div>
           </div>
 
-          {/* Main CTA */}
-          <div className="w-full max-w-4xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
+          {/* CTA */}
+          <div
+            className="w-full max-w-4xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
             style={{ "--delay": "0.35s" }}
           >
-            <h2 className="text-3xl font-bold mb-4">Pronto para explorar?</h2>
+            <h2 className="text-3xl font-bold mb-4">
+              Pronto para explorar?
+            </h2>
+
             <p className="text-[var(--color-text-secondary)] mb-6 max-w-md mx-auto">
-              Visualize seus top tracks, artistas, tendências e muito mais em gráficos interativos.
+              Visualize seus top tracks, artistas, tendências e
+              muito mais em gráficos interativos.
             </p>
+
             <button
               onClick={() => navigate("/graficos")}
               className="btn-primary px-8 py-4 text-lg"
@@ -172,7 +252,7 @@ export default function HomePage() {
     );
   }
 
-  // ============ NAO LOGADO - LANDING PAGE ============
+  // ================= NÃO LOGADO =================
   return (
     <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
       {/* Hero */}
@@ -182,26 +262,41 @@ export default function HomePage() {
           <div className="hero-orb orb-2" />
           <div className="hero-grid" />
         </div>
+
         <div className="max-w-2xl w-full text-center relative z-10">
           <h1 className="text-7xl font-extrabold mb-6 leading-tight reveal">
             Seus dados
             <br />
-            <span className="text-[var(--color-spotify-green)] glow-text">com clareza visual.</span>
+
+            <span className="text-[var(--color-spotify-green)] glow-text">
+              com clareza visual.
+            </span>
           </h1>
 
-          <p className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed reveal" style={{ "--delay": "0.08s" }}>
-            Conecte sua conta Spotify e transforme seus top tracks, artistas e tendências
-            em visualizações impressionantes. Análise profunda, design elegante.
+          <p
+            className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed reveal"
+            style={{ "--delay": "0.08s" }}
+          >
+            Conecte sua conta Spotify e transforme seus top
+            tracks, artistas e tendências em visualizações
+            impressionantes.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center reveal" style={{ "--delay": "0.16s" }}>
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center reveal"
+            style={{ "--delay": "0.16s" }}
+          >
             <button
               onClick={() => navigate("/login")}
               className="btn-primary px-8 py-4 text-lg"
             >
               Começar Agora
             </button>
-            <a href="#features" className="btn-secondary px-8 py-4 text-lg">
+
+            <a
+              href="#features"
+              className="btn-secondary px-8 py-4 text-lg"
+            >
               Ver Features ↓
             </a>
           </div>
@@ -209,9 +304,15 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg mx-4 p-20">
+      <section
+        id="features"
+        className="bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg mx-4 p-20"
+      >
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-5xl font-bold text-center mb-16 reveal" style={{ "--delay": "0.05s" }}>
+          <h2
+            className="text-5xl font-bold text-center mb-16 reveal"
+            style={{ "--delay": "0.05s" }}
+          >
             Recursos Principais
           </h2>
 
@@ -220,26 +321,43 @@ export default function HomePage() {
               {
                 icon: BarChart3,
                 title: "Visualizações Poderosas",
-                description: "Gráficos de barras, linhas, donuts e mais para explorar seus dados musicais.",
+                description:
+                  "Gráficos de barras, linhas, donuts e mais.",
               },
               {
                 icon: TrendingUp,
                 title: "Análise Temporal",
-                description: "Acompanhe como suas preferências musicais evoluem ao longo do tempo.",
+                description:
+                  "Acompanhe suas preferências musicais.",
               },
               {
                 icon: Zap,
                 title: "Rápido & Elegante",
-                description: "Interface limpa, escura e responsiva. Dados musicais com clareza visual.",
+                description:
+                  "Interface limpa, escura e responsiva.",
               },
             ].map((feature, idx) => {
               const Icon = feature.icon;
+
               return (
-                <div key={idx} className="card reveal-scale" style={{ "--delay": `${0.1 + idx * 0.08}s` }}>
+                <div
+                  key={idx}
+                  className="card reveal-scale"
+                  style={{
+                    "--delay": `${0.1 + idx * 0.08}s`,
+                  }}
+                >
                   <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
-                    <Icon className="text-[var(--color-spotify-green)]" size={24} />
+                    <Icon
+                      className="text-[var(--color-spotify-green)]"
+                      size={24}
+                    />
                   </div>
-                  <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
+
+                  <h3 className="text-xl font-bold mb-3">
+                    {feature.title}
+                  </h3>
+
                   <p className="text-[var(--color-text-secondary)]">
                     {feature.description}
                   </p>
@@ -250,14 +368,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* CTA */}
       <section className="bg-[var(--color-bg-elevated)] py-20 px-4">
         <div className="max-w-2xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-6 reveal" style={{ "--delay": "0.05s" }}>
+          <h2
+            className="text-4xl font-bold mb-6 reveal"
+            style={{ "--delay": "0.05s" }}
+          >
             Pronto para explorar seus dados?
           </h2>
-          <p className="text-lg text-[var(--color-text-secondary)] mb-8 reveal" style={{ "--delay": "0.12s" }}>
-            Conecte com Spotify e comece agora. É rápido e seguro.
+
+          <p
+            className="text-lg text-[var(--color-text-secondary)] mb-8 reveal"
+            style={{ "--delay": "0.12s" }}
+          >
+            Conecte com Spotify e comece agora.
           </p>
 
           <button
@@ -273,7 +398,10 @@ export default function HomePage() {
       {/* Footer */}
       <footer className="border-t border-[var(--color-border-subtle)] py-8 px-4">
         <div className="max-w-6xl mx-auto text-center text-sm text-[var(--color-text-secondary)]">
-          <p>SpotifyCharts © 2026 • Dados & Visualizações Musicais</p>
+          <p>
+            SpotifyCharts © 2026 • Dados & Visualizações
+            Musicais
+          </p>
         </div>
       </footer>
     </div>
