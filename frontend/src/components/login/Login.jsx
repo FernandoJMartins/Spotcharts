@@ -1,6 +1,10 @@
+import { withApiBase } from "../../utils/apiBase";
+
 export default function Login() {
+  const apiLoginUrl = withApiBase("/api/auth/login/");
+
   const handleSpotifyLogin = () => {
-    window.location.href = "/api/auth/login/";
+    window.location.href = apiLoginUrl;
   };
 
   return (

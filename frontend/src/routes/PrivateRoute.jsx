@@ -1,6 +1,7 @@
 
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { withApiBase } from "../utils/apiBase";
 
 export default function PrivateRoute({ children }) {
   const [isAuthenticated, setIsAuthenticated] = useState(null);
@@ -11,7 +12,7 @@ export default function PrivateRoute({ children }) {
     // Executa apenas uma vez quando monta
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me/", {
+        const res = await fetch(withApiBase("/api/auth/me/"), {
           credentials: "include",
         });
         setIsAuthenticated(res.ok);
