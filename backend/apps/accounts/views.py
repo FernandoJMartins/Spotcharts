@@ -15,6 +15,7 @@ from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.authentication import BaseAuthentication
 from rest_framework import exceptions
+from rest_framework.response import Response
 
 from .models import UserProfile
 from services.spotify_client import SpotifyClient
@@ -226,6 +227,27 @@ class AuthCallbackView(APIView):
 
         resp["Location"] = redirect_url
 
+        return resp
+
+
+class AuthSuccessView(APIView):
+    """
+    Simple redirect endpoint that sends the user to the configured FRONTEND_URL.
+    """
+
+    authentication_classes = []
+    permission_classes = []
+
+    def get(self, request):
+        frontend_url = os.environ.get("FRONTEND_URL")
+
+        if not frontend_url:
+            return Response({"detail": "frontend_not_configured"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        frontend_url = frontend_url.rstrip('/')
+
+        resp = Response(status=status.HTTP_302_FOUND)
+        resp["Location"] = frontend_url
         return resp
 
 
