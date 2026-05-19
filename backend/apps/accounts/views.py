@@ -216,7 +216,7 @@ class AuthCallbackView(APIView):
             )
 
         redirect_url = (
-            f"{frontend_url}/auth/success"
+            f"{frontend_url.split('/')[-1]}/auth/success"
             f"?token={token}"
         )
 

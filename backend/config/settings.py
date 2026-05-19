@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com']
+ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com', 'host.docker.internal', 'backend']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
