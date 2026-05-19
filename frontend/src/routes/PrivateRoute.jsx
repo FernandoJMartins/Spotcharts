@@ -1,39 +1,50 @@
-
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { withApiBase } from "../utils/apiBase";
 
-export default function PrivateRoute({ children }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(null);
-  const [loading, setLoading] = useState(true);
+import { api } from "../utils/apiBase";
+
+export default function PrivateRoute({
+  children,
+}) {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    // Verifica se o usuário está autenticado chamando /api/auth/me/
-    // Executa apenas uma vez quando monta
     const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setIsAuthenticated(false);
+        return;
+      }
+
       try {
-        const res = await fetch(withApiBase("/api/auth/me/"), {
-          credentials: "include",
-        });
-        setIsAuthenticated(res.ok);
+        const res = await api.get("/api/auth/me/");
+
+        setIsAuthenticated(res.status === 200);
+
       } catch (error) {
         console.error("Auth check error:", error);
+
+        localStorage.removeItem("token");
+
         setIsAuthenticated(false);
-      } finally {
-        setLoading(false);
       }
     };
 
     checkAuth();
-  }, []); // Dependência vazia = executa uma vez
+  }, []);
 
-  if (loading) {
-    return <div>Carregando...</div>;
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        Carregando...
+      </div>
+    );
   }
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  return children;
+  return <>{children}</>;
 }

@@ -4,6 +4,7 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Home from "../components/homepage/HomePage";
 import Login from "../components/login/Login";
+import AuthSuccess from "../components/login/AuthSuccess";
 import Register from "../components/register/Register";
 import Charts from "../components/chart/Charts";
 import NotFound from "../components/error/NotFound";
@@ -13,7 +14,9 @@ import Header from "../components/header/Header";
 // Layout wrapper to conditionally show header
 function LayoutWrapper({ children }) {
   const location = useLocation();
-  const hideHeader = ["/login", "/registro"].includes(location.pathname);
+  const hideHeader = ["/login", "/registro", "/auth/success"].includes(
+    location.pathname
+  );
 
   return (
     <>
@@ -40,6 +43,14 @@ export default function AppRoutes() {
           element={
             <LayoutWrapper>
               <Login />
+            </LayoutWrapper>
+          }
+        />
+        <Route
+          path="/auth/success"
+          element={
+            <LayoutWrapper>
+              <AuthSuccess />
             </LayoutWrapper>
           }
         />
