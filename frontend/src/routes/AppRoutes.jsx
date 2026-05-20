@@ -10,6 +10,7 @@ import Charts from "../components/chart/Charts";
 import NotFound from "../components/error/NotFound";
 import PrivateRoute from "./PrivateRoute";
 import Header from "../components/header/Header";
+import TopTracks from "../components/pages/TopTrack";
 
 // Layout wrapper to conditionally show header
 function LayoutWrapper({ children }) {
@@ -59,6 +60,14 @@ export default function AppRoutes() {
           element={
             <LayoutWrapper>
               <Register />
+            </LayoutWrapper>
+          }
+        />
+        <Route
+          path="/top-tracks"
+          element={
+            <LayoutWrapper>
+              <TopTracks />
             </LayoutWrapper>
           }
         />

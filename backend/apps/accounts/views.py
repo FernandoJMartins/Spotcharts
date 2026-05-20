@@ -470,28 +470,424 @@ class MeView(APIView):
         except Exception:
             return Response({"detail": "Invalid token"}, status=401)
 
+
 class TopTracksView(APIView):
     """
     Return user's Spotify top tracks.
+    Supports Spotify users and guest/mock users.
     """
 
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
+        # -------------------------------------------------
+        # 1) Detecta guest pelo JWT
+        # -------------------------------------------------
+        auth_header = request.headers.get("Authorization", "")
+        token = None
+        payload = None
+
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+
+        if token:
+            try:
+                jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
+                payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+            except Exception:
+                payload = None
+
+        is_guest = bool(payload and payload.get("mode") == "guest")
+
+        period = request.GET.get("period", "short")
+        limit = int(request.GET.get("limit", 10))
+        limit = max(1, min(limit, 50))
+
+
+        if is_guest:
+            mock_items = [
+    {
+        "id": "guest-track-1",
+        "name": "Midnight Signals",
+        "artists": ["Synthetic Echo"],
+        "album": "Neon Dreams",
+        "cover": "https://picsum.photos/id/1/300/300",
+        "duration": 218,
+        "explicit": False,
+        "track_number": 1,
+        "release_date": "2024-03-15",
+        "uri": "spotify:track:guest-track-1"
+    },
+    {
+        "id": "guest-track-2",
+        "name": "Neon Drift",
+        "artists": ["Low Orbit"],
+        "album": "Velocity",
+        "cover": "https://picsum.photos/id/2/300/300",
+        "duration": 245,
+        "explicit": False,
+        "track_number": 3,
+        "release_date": "2024-02-10",
+        "uri": "spotify:track:guest-track-2"
+    },
+    {
+        "id": "guest-track-3",
+        "name": "Static Bloom",
+        "artists": ["Paper Waves"],
+        "album": "Glitch Garden",
+        "cover": "https://picsum.photos/id/3/300/300",
+        "duration": 192,
+        "explicit": False,
+        "track_number": 2,
+        "release_date": "2024-01-22",
+        "uri": "spotify:track:guest-track-3"
+    },
+    {
+        "id": "guest-track-4",
+        "name": "Afterglow Routine",
+        "artists": ["Velvet Circuit"],
+        "album": "Dusk & Data",
+        "cover": "https://picsum.photos/id/4/300/300",
+        "duration": 267,
+        "explicit": True,
+        "track_number": 5,
+        "release_date": "2024-04-01",
+        "uri": "spotify:track:guest-track-4"
+    },
+    {
+        "id": "guest-track-5",
+        "name": "Comet Frequency",
+        "artists": ["Arc Lights"],
+        "album": "Stellar Drift",
+        "cover": "https://picsum.photos/id/5/300/300",
+        "duration": 203,
+        "explicit": False,
+        "track_number": 4,
+        "release_date": "2024-03-30",
+        "uri": "spotify:track:guest-track-5"
+    },
+    {
+        "id": "guest-track-6",
+        "name": "Pulse Refraction",
+        "artists": ["Echo Delta"],
+        "album": "Reflections",
+        "cover": "https://picsum.photos/id/6/300/300",
+        "duration": 231,
+        "explicit": False,
+        "track_number": 1,
+        "release_date": "2024-05-12",
+        "uri": "spotify:track:guest-track-6"
+    },
+    {
+        "id": "guest-track-7",
+        "name": "Crystal Waves",
+        "artists": ["Neon VHS"],
+        "album": "Synthetic Summer",
+        "cover": "https://picsum.photos/id/7/300/300",
+        "duration": 198,
+        "explicit": False,
+        "track_number": 2,
+        "release_date": "2024-06-05",
+        "uri": "spotify:track:guest-track-7"
+    },
+    {
+        "id": "guest-track-8",
+        "name": "Orbit Bleed",
+        "artists": ["Deep Scan"],
+        "album": "Signal Decay",
+        "cover": "https://picsum.photos/id/8/300/300",
+        "duration": 254,
+        "explicit": True,
+        "track_number": 3,
+        "release_date": "2024-07-19",
+        "uri": "spotify:track:guest-track-8"
+    },
+    {
+        "id": "guest-track-9",
+        "name": "Silicon Rain",
+        "artists": ["Binary Dreams"],
+        "album": "Digital Drizzle",
+        "cover": "https://picsum.photos/id/9/300/300",
+        "duration": 277,
+        "explicit": False,
+        "track_number": 6,
+        "release_date": "2024-08-02",
+        "uri": "spotify:track:guest-track-9"
+    },
+    {
+        "id": "guest-track-10",
+        "name": "Laser Grid",
+        "artists": ["Phantom Drive"],
+        "album": "Arcade Assault",
+        "cover": "https://picsum.photos/id/10/300/300",
+        "duration": 189,
+        "explicit": False,
+        "track_number": 1,
+        "release_date": "2024-09-14",
+        "uri": "spotify:track:guest-track-10"
+    },
+    {
+        "id": "guest-track-11",
+        "name": "Night Racer",
+        "artists": ["Turbo Void"],
+        "album": "Asphalt Neon",
+        "cover": "https://picsum.photos/id/11/300/300",
+        "duration": 222,
+        "explicit": False,
+        "track_number": 4,
+        "release_date": "2024-10-27",
+        "uri": "spotify:track:guest-track-11"
+    },
+    {
+        "id": "guest-track-12",
+        "name": "Glitch Heaven",
+        "artists": ["Data Corrupt"],
+        "album": "Error 404",
+        "cover": "https://picsum.photos/id/12/300/300",
+        "duration": 210,
+        "explicit": True,
+        "track_number": 2,
+        "release_date": "2024-11-11",
+        "uri": "spotify:track:guest-track-12"
+    },
+    {
+        "id": "guest-track-13",
+        "name": "Solar Flare",
+        "artists": ["Aurora Axis"],
+        "album": "Polaris",
+        "cover": "https://picsum.photos/id/13/300/300",
+        "duration": 240,
+        "explicit": False,
+        "track_number": 5,
+        "release_date": "2024-12-03",
+        "uri": "spotify:track:guest-track-13"
+    },
+    {
+        "id": "guest-track-14",
+        "name": "Frozen Synth",
+        "artists": ["Arctic Pulse"],
+        "album": "Subzero Beats",
+        "cover": "https://picsum.photos/id/14/300/300",
+        "duration": 195,
+        "explicit": False,
+        "track_number": 3,
+        "release_date": "2025-01-18",
+        "uri": "spotify:track:guest-track-14"
+    },
+    {
+        "id": "guest-track-15",
+        "name": "Vapor Trail",
+        "artists": ["Memory Lane"],
+        "album": "Retro Wave 85",
+        "cover": "https://picsum.photos/id/15/300/300",
+        "duration": 263,
+        "explicit": False,
+        "track_number": 7,
+        "release_date": "2025-02-22",
+        "uri": "spotify:track:guest-track-15"
+    },
+    {
+        "id": "guest-track-16",
+        "name": "Digital Sun",
+        "artists": ["Pixel Heart"],
+        "album": "8-bit Sunrise",
+        "cover": "https://picsum.photos/id/16/300/300",
+        "duration": 187,
+        "explicit": False,
+        "track_number": 2,
+        "release_date": "2025-03-09",
+        "uri": "spotify:track:guest-track-16"
+    },
+    {
+        "id": "guest-track-17",
+        "name": "Retro Burn",
+        "artists": ["Cassette Ghost"],
+        "album": "Faded Tapes",
+        "cover": "https://picsum.photos/id/17/300/300",
+        "duration": 214,
+        "explicit": True,
+        "track_number": 4,
+        "release_date": "2025-04-14",
+        "uri": "spotify:track:guest-track-17"
+    },
+    {
+        "id": "guest-track-18",
+        "name": "Phantom Signal",
+        "artists": ["Lost Circuit"],
+        "album": "Static Void",
+        "cover": "https://picsum.photos/id/18/300/300",
+        "duration": 229,
+        "explicit": False,
+        "track_number": 1,
+        "release_date": "2025-05-01",
+        "uri": "spotify:track:guest-track-18"
+    },
+    {
+        "id": "guest-track-19",
+        "name": "Starlight Echo",
+        "artists": ["Orbital Drift"],
+        "album": "Deep Space Radio",
+        "cover": "https://picsum.photos/id/19/300/300",
+        "duration": 256,
+        "explicit": False,
+        "track_number": 6,
+        "release_date": "2025-06-20",
+        "uri": "spotify:track:guest-track-19"
+    },
+    {
+        "id": "guest-track-20",
+        "name": "Nightcall",
+        "artists": ["Street Heat"],
+        "album": "Midnight City",
+        "cover": "https://picsum.photos/id/20/300/300",
+        "duration": 248,
+        "explicit": False,
+        "track_number": 3,
+        "release_date": "2025-07-07",
+        "uri": "spotify:track:guest-track-20"
+    },
+    {
+        "id": "guest-track-21",
+        "name": "Arcade Dreams",
+        "artists": ["Quarter Drop"],
+        "album": "Insert Coin",
+        "cover": "https://picsum.photos/id/21/300/300",
+        "duration": 201,
+        "explicit": False,
+        "track_number": 5,
+        "release_date": "2025-08-29",
+        "uri": "spotify:track:guest-track-21"
+    },
+    {
+        "id": "guest-track-22",
+        "name": "Velocity Shift",
+        "artists": ["Rush Delta"],
+        "album": "Hyperdrive",
+        "cover": "https://picsum.photos/id/22/300/300",
+        "duration": 235,
+        "explicit": True,
+        "track_number": 2,
+        "release_date": "2025-09-16",
+        "uri": "spotify:track:guest-track-22"
+    },
+    {
+        "id": "guest-track-23",
+        "name": "Mirror's Edge",
+        "artists": ["Chrome Sky"],
+        "album": "Glass Horizon",
+        "cover": "https://picsum.photos/id/23/300/300",
+        "duration": 276,
+        "explicit": False,
+        "track_number": 8,
+        "release_date": "2025-10-10",
+        "uri": "spotify:track:guest-track-23"
+    },
+    {
+        "id": "guest-track-24",
+        "name": "Blade Runner Blues",
+        "artists": ["Rainy Streets"],
+        "album": "Los Angeles 2049",
+        "cover": "https://picsum.photos/id/24/300/300",
+        "duration": 289,
+        "explicit": False,
+        "track_number": 4,
+        "release_date": "2025-11-05",
+        "uri": "spotify:track:guest-track-24"
+    },
+    {
+        "id": "guest-track-25",
+        "name": "Terminal Velocity",
+        "artists": ["Dash Vector"],
+        "album": "Overdrive",
+        "cover": "https://picsum.photos/id/25/300/300",
+        "duration": 207,
+        "explicit": False,
+        "track_number": 1,
+        "release_date": "2025-12-12",
+        "uri": "spotify:track:guest-track-25"
+    },
+    {
+        "id": "guest-track-26",
+        "name": "Hypersleep",
+        "artists": ["Stasis Field"],
+        "album": "Cryo Chamber",
+        "cover": "https://picsum.photos/id/26/300/300",
+        "duration": 315,
+        "explicit": False,
+        "track_number": 3,
+        "release_date": "2026-01-19",
+        "uri": "spotify:track:guest-track-26"
+    },
+    {
+        "id": "guest-track-27",
+        "name": "Outrun Sunset",
+        "artists": ["Ferrari Testarossa"],
+        "album": "Coastline Drive",
+        "cover": "https://picsum.photos/id/27/300/300",
+        "duration": 226,
+        "explicit": False,
+        "track_number": 5,
+        "release_date": "2026-02-14",
+        "uri": "spotify:track:guest-track-27"
+    },
+    {
+        "id": "guest-track-28",
+        "name": "Electric Lullaby",
+        "artists": ["Cradle Static"],
+        "album": "White Noise Dreams",
+        "cover": "https://picsum.photos/id/28/300/300",
+        "duration": 181,
+        "explicit": False,
+        "track_number": 2,
+        "release_date": "2026-03-08",
+        "uri": "spotify:track:guest-track-28"
+    },
+    {
+        "id": "guest-track-29",
+        "name": "Transmission Lost",
+        "artists": ["Dead Air"],
+        "album": "Ghost Frequencies",
+        "cover": "https://picsum.photos/id/29/300/300",
+        "duration": 242,
+        "explicit": True,
+        "track_number": 6,
+        "release_date": "2026-04-25",
+        "uri": "spotify:track:guest-track-29"
+    },
+    {
+        "id": "guest-track-30",
+        "name": "Final Frame",
+        "artists": ["Last Sequence"],
+        "album": "End Credits",
+        "cover": "https://picsum.photos/id/30/300/300",
+        "duration": 298,
+        "explicit": False,
+        "track_number": 10,
+        "release_date": "2026-05-01",
+        "uri": "spotify:track:guest-track-30"
+    }
+]
+            
+            items = mock_items[:limit]
+
+            return Response({
+                "count": len(items),
+                "items": items,
+                "mode": "guest",
+                "period": period,
+            })
+
         user = request.user
 
-        if not user.refresh_token_encrypted:
+        if not getattr(user, "refresh_token_encrypted", None):
             return Response(
                 {"detail": "no_refresh_token"},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         try:
-            refresh_token = decrypt_str(
-                user.refresh_token_encrypted
-            )
-
+            refresh_token = decrypt_str(user.refresh_token_encrypted)
         except Exception:
             return Response(
                 {"detail": "invalid_refresh_token_storage"},
@@ -510,7 +906,6 @@ class TopTracksView(APIView):
 
         try:
             data = sc.refresh_token(refresh_token)
-
         except Exception as exc:
             return Response(
                 {
@@ -528,21 +923,12 @@ class TopTracksView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        period = request.GET.get("period", "short")
-
-        limit = int(
-            request.GET.get("limit", 10)
-        )
-
-        limit = max(1, min(limit, 50))
-
         try:
             payload = sc.get_top_tracks(
                 access_token,
                 period=period,
                 limit=limit,
             )
-
         except Exception as exc:
             return Response(
                 {
@@ -553,7 +939,6 @@ class TopTracksView(APIView):
             )
 
         items = []
-
         for track in payload.get("items", []):
             items.append({
                 "id": track.get("id"),
@@ -568,4 +953,6 @@ class TopTracksView(APIView):
         return Response({
             "count": len(items),
             "items": items,
+            "mode": "spotify",
+            "period": period,
         })
