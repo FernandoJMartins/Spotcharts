@@ -6,7 +6,6 @@ import { apiFetch } from "../../utils/appClient";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import './home.css'
 export default function HomePage() {
-  // Dados mockados para gráficos
   const listeningHistoryData = [
     { month: 'Jan', plays: 420 },
     { month: 'Fev', plays: 580 },
@@ -102,7 +101,7 @@ useEffect(() => {
 
   if (loading) {
     return (
-      <div className="flex mx-auto items-center justify-center min-h-screen bg-[var(--color-bg-elevated)]">
+      <div className="page-bg flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-elevated)] gap-[var(--spacing-2xl)]">
         <div className="text-center">
           <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
             <div className="w-8 h-8 border-3 border-[var(--color-spotify-green)] border-t-transparent rounded-full animate-spin"></div>
@@ -196,7 +195,7 @@ useEffect(() => {
           </div>
  
           {/* Charts Section */}
-          <div className="w-full mb-12 grid lg:grid-cols-2 gap-8">
+          <div className="items-center mx-auto w-full mb-12 grid lg:grid-cols-2 gap-8">
             {/* Listening History Chart */}
             <div
               className="card reveal-scale"
