@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, Zap, LogOut } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,57 +11,50 @@ export default function HomePage() {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
 
-    if (!token) {
-      setLoading(false);
-      return;
-    }
+useEffect(() => {
+  const token = localStorage.getItem("token");
 
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(withApiBase("/api/auth/me/"), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+  if (!token) {
+    setLoading(false);
+    return;
+  }
 
-        if (!res.ok) {
-          localStorage.removeItem("token");
-          setIsAuthenticated(false);
-          setUser(null);
-          return;
-        }
+  const checkAuth = async () => {
+    try {
+      const res = await apiFetch("/api/auth/me/");
 
-        const data = await res.json();
-
-        setIsAuthenticated(true);
-        setUser(data);
-      } catch (error) {
-        console.error("Auth check error:", error);
-
-        localStorage.removeItem("token");
+      if (!res.ok) {
+        // localStorage.removeItem("token");
         setIsAuthenticated(false);
         setUser(null);
-      } finally {
-        setLoading(false);
+        return;
       }
-    };
 
-    checkAuth();
-  }, []);
+      const data = await res.json();
+      setIsAuthenticated(true);
+      setUser(data);
+
+    } catch (error) {
+      console.error("Auth check error:", error);
+      // localStorage.removeItem("token");
+      setIsAuthenticated(false);
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  checkAuth();
+}, []);
 
   const handleLogout = async () => {
     const token = localStorage.getItem("token");
 
     try {
-      await fetch(withApiBase("/api/auth/logout/"), {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      await apiFetch("/api/auth/logout/", {
+  method: "POST",
+});
     } catch (error) {
       console.error(error);
     }

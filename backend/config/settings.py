@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com', 'host.docker.internal', 'backend', 'spotcharts.onrender.com', 'spotcharts.vercel.app']
+ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com', 'host.docker.internal', 'backend', 'spotcharts.onrender.com', 'spotcharts.vercel.app', 'ridden-never-purveyor.ngrok-free.dev']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -90,6 +90,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://127.0.0.1:5173",
 ]
+CORS_ALLOW_ALL_ORIGINS = True
+
 # Allow CORS for FRONTEND_URL (ngrok/vercel/custom)
 frontend_url = os.environ.get('FRONTEND_URL', '').rstrip('/')
 if frontend_url:
@@ -109,6 +111,7 @@ if "vercel.app" in frontend_url:
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept',
+    "ngrok-skip-browser-warning",
     'accept-encoding',
     'authorization',
     'content-type',
@@ -119,3 +122,11 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+]

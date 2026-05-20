@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
+import { notifyAuthChanged } from "../../utils/appClient";
 export default function AuthSuccess() {
   const navigate = useNavigate();
 
@@ -10,18 +10,10 @@ export default function AuthSuccess() {
 
     if (token) {
       localStorage.setItem("token", token);
-
-      // remove token from URL and navigate home
-      try {
-        const cleanPath = "/";
-        window.history.replaceState({}, document.title, cleanPath);
-      } catch (e) {
-        // ignore
-      }
-
-      navigate("/");
+      notifyAuthChanged();
+      navigate("/", { replace: true });
       return;
-    }
+}
 
     navigate("/login");
   }, [navigate]);

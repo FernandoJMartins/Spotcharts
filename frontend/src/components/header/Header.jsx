@@ -2,48 +2,46 @@ import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, LogOut } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
-
+import { apiFetch } from "../../utils/appClient";
 export default function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // Check auth status apenas uma vez
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(withApiBase("/api/auth/me/"), {
-          credentials: "include",
-        });
-        
-        if (res.ok) {
-          const data = await res.json();
-          setIsAuthenticated(true);
-          setUser(data);
-        } else {
-          setIsAuthenticated(false);
-          setUser(null);
-        }
-      } catch (error) {
-        console.error("Auth check error:", error);
+useEffect(() => {
+  const checkAuth = async () => {
+    try {
+      const res = await apiFetch("/api/auth/me/");
+      console.log(localStorage.getItem("token"))
+      if (res.ok) {
+        const data = await res.json();
+        setIsAuthenticated(true);
+        setUser(data);
+      } else {
         setIsAuthenticated(false);
         setUser(null);
       }
-    };
-
-    checkAuth();
-  }, []);
-
-  const handleLogout = async () => {
-    await fetch(withApiBase("/api/auth/logout/"), {
-      method: "POST",
-      credentials: "include",
-    });
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate("/login");
+    } catch (error) {
+      console.error("Auth check error:", error);
+      setIsAuthenticated(false);
+      setUser(null);
+    }
   };
+
+  checkAuth();
+}, []);
+
+const handleLogout = async () => {
+  await apiFetch("/api/auth/logout/", {
+    method: "POST",
+  });
+
+  localStorage.removeItem("token");
+  setIsAuthenticated(false);
+  setUser(null);
+  navigate("/login");
+};
 
   const publicLinks = [
     { to: "/", label: "Início" },

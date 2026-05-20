@@ -21,10 +21,14 @@ from .models import UserProfile
 from services.spotify_client import SpotifyClient
 from utils.crypto import decrypt_str
 
+from django.contrib.auth.models import AnonymousUser
 
 class JWTAuthentication(BaseAuthentication):
     """
     Authenticate requests using JWT from Authorization header.
+    Supports:
+      • Spotify users
+      • Guest users
     """
 
     def authenticate(self, request):
@@ -34,7 +38,6 @@ class JWTAuthentication(BaseAuthentication):
             return None
 
         token = auth.split(" ", 1)[1].strip()
-
         if not token:
             return None
 
@@ -46,27 +49,28 @@ class JWTAuthentication(BaseAuthentication):
                 jwt_secret,
                 algorithms=["HS256"],
             )
-
         except jwt.ExpiredSignatureError:
             raise exceptions.AuthenticationFailed("token_expired")
-
         except Exception:
             raise exceptions.AuthenticationFailed("invalid_token")
 
-        spotify_id = payload.get("sub")
+        sub = payload.get("sub")
+        mode = payload.get("mode", "spotify")
 
-        if not spotify_id:
+        if not sub:
             raise exceptions.AuthenticationFailed("invalid_token")
 
-        try:
-            user = UserProfile.objects.get(spotify_id=spotify_id)
+        if mode == "guest" or sub.startswith("guest:"):
+            request.guest_payload = payload
+            return (AnonymousUser(), None)
 
+        try:
+            user = UserProfile.objects.get(spotify_id=sub)
         except UserProfile.DoesNotExist:
             raise exceptions.AuthenticationFailed("user_not_found")
 
         return (user, None)
-
-
+    
 class AuthCallbackView(APIView):
     """
     Handle Spotify OAuth callback.
@@ -87,7 +91,7 @@ class AuthCallbackView(APIView):
         client_id = os.environ.get("SPOTIFY_CLIENT_ID")
         client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
         redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
-
+        print("REDIRECT_URI", redirect_uri)
         if not all([client_id, client_secret, redirect_uri]):
             return Response(
                 {"detail": "server_not_configured"},
@@ -102,7 +106,7 @@ class AuthCallbackView(APIView):
 
         try:
             token_data = sc.exchange_code(code)
-
+            print("TOKEN_DATA: ",token_data)
         except Exception as exc:
             return Response(
                 {
@@ -206,7 +210,7 @@ class AuthCallbackView(APIView):
         )
 
         frontend_url = os.environ.get("FRONTEND_URL")
-
+        print("FRONTEND_URL", frontend_url)
         if not frontend_url:
             return Response(
                 {
@@ -220,7 +224,61 @@ class AuthCallbackView(APIView):
             f"{frontend_url.rstrip('/')}/auth/success?token={token}"
         )
 
+class GuestLoginView(APIView):
+    """
+    Create a mock guest session without Spotify.
+    """
 
+    authentication_classes = []
+    permission_classes = []
+
+    def post(self, request):
+        guest_id = f"guest:{uuid.uuid4().hex[:12]}"
+        display_name = "Guest"
+
+        user_profile, created = UserProfile.objects.get_or_create(
+            spotify_id=guest_id,
+            defaults={
+                "display_name": display_name,
+                "email": None,
+                "refresh_token_encrypted": None,
+                "token_expires_at": None,
+            },
+        )
+
+        User = get_user_model()
+        User.objects.update_or_create(
+            username=guest_id,
+            defaults={
+                "email": "",
+                "first_name": display_name,
+            },
+        )
+
+        jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
+        jwt_exp_days = int(os.environ.get("JWT_EXP_DAYS", "7"))
+
+        payload = {
+            "sub": guest_id,
+            "name": display_name,
+            "mode": "guest",
+            "exp": datetime.utcnow() + timedelta(days=jwt_exp_days),
+            "iat": datetime.utcnow(),
+        }
+
+        token = jwt.encode(payload, jwt_secret, algorithm="HS256")
+
+        return Response(
+            {
+                "token": token,
+                "spotify_id": guest_id,
+                "display_name": display_name,
+                "guest": True,
+                "created": created,
+            },
+            status=status.HTTP_201_CREATED,
+        )
+        
 class LoginView(APIView):
     """
     Start Spotify OAuth flow.
@@ -230,9 +288,10 @@ class LoginView(APIView):
     permission_classes = []
 
     def get(self, request):
+        
         client_id = os.environ.get("SPOTIFY_CLIENT_ID")
         redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
-
+        print("REDIRECT_URI", redirect_uri)
         if not all([client_id, redirect_uri]):
             return Response(
                 {"detail": "server_not_configured"},
@@ -276,6 +335,11 @@ class RefreshTokenView(APIView):
 
     def post(self, request):
         user = request.user
+        if str(user.spotify_id).startswith("guest:"):
+            return Response(
+                {"detail": "guest_account_has_no_refresh_token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not user.refresh_token_encrypted:
             return Response(
@@ -347,6 +411,11 @@ class LogoutView(APIView):
 
     def post(self, request):
         user = request.user
+        
+        if not str(user.spotify_id).startswith("guest:"):
+            user.refresh_token_encrypted = None
+            user.token_expires_at = None
+            user.save()
 
         user.refresh_token_encrypted = None
         user.token_expires_at = None
@@ -356,26 +425,50 @@ class LogoutView(APIView):
         return Response({
             "detail": "logged_out",
         })
+from rest_framework.permissions import AllowAny
 
 
 class MeView(APIView):
-    """
-    Return authenticated user profile.
-    """
-
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request):
-        user = request.user
+        if request.user and getattr(request.user, "is_authenticated", False):
+            user = request.user
+            return Response({
+                "mode": "spotify",
+                "spotify_id": "abcde@1234ForaNeymar",
+                "display_name": user.display_name,
+                "email": user.email,
+                "last_sync": user.last_sync,
+            })
 
-        return Response({
-            "spotify_id": user.spotify_id,
-            "display_name": user.display_name,
-            "email": user.email,
-            "last_sync": user.last_sync,
-        })
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith("Bearer "):
+            return Response({"detail": "No token"}, status=401)
 
+        token = auth_header.split(" ", 1)[1].strip()
+        if not token:
+            return Response({"detail": "No token"}, status=401)
+
+        jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
+
+        try:
+            payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+
+            if payload.get("mode") == "guest":
+                return Response({
+                    "mode": "guest",
+                    "display_name": payload.get("name", "Guest"),
+                    "guest_id": payload.get("sub"),
+                })
+
+            return Response({"detail": "Invalid token"}, status=401)
+
+        except jwt.ExpiredSignatureError:
+            return Response({"detail": "Token expired"}, status=401)
+        except Exception:
+            return Response({"detail": "Invalid token"}, status=401)
 
 class TopTracksView(APIView):
     """

@@ -1,21 +1,66 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { withApiBase } from "../../utils/apiBase";
-
+import { notifyAuthChanged } from "../../utils/appClient";
+import { useState } from "react";
 export default function Login() {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
   const handleSpotifyLogin = () => {
     window.location.href = withApiBase("/api/auth/login/");
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
+  const handleGuestLogin = async () => {
+    try {
+      const resp = await fetch(withApiBase("/api/auth/guest/"), {
+        method: "POST",
+      });
 
-    if (token) {
+      if (!resp.ok) {
+        throw new Error("guest_login_failed");
+      }
+
+      const data = await resp.json();
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+        notifyAuthChanged();
+        navigate("/");
+      }
+      if (!data.token) {
+        throw new Error("missing_token");
+      }
+
+      localStorage.setItem("token", data.token);
+      console.log(data.token)
+      console.log(localStorage.getItem("token"))
       navigate("/");
+    } catch (err) {
+      console.error(err);
     }
-  }, [navigate]);
+  };
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await apiFetch("/api/auth/me/");
+        if (res.ok) {
+          setUser(await res.json());
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
+      } catch {
+        setIsAuthenticated(false);
+      }
+    };
+
+    checkAuth();
+    window.addEventListener("authChanged", checkAuth);
+    return () => window.removeEventListener("authChanged", checkAuth);
+  }, []);
 
   return (
     <div className="page-bg flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-elevated)] gap-[var(--spacing-2xl)]">
@@ -51,7 +96,7 @@ export default function Login() {
         </p>
 
         <div
-          className="flex gap-[var(--spacing-md)] mt-[var(--spacing-xl)] reveal"
+          className="flex gap-[var(--spacing-md)] mt-[var(--spacing-xl)] reveal flex-wrap justify-center"
           style={{ "--delay": "0.18s" }}
         >
           <button
@@ -59,6 +104,13 @@ export default function Login() {
             className="btn-primary px-8 py-3 text-lg"
           >
             ▶ Conectar com Spotify
+          </button>
+
+          <button
+            onClick={handleGuestLogin}
+            className="btn-secondary px-8 py-3 text-lg"
+          >
+            Entrar como guest
           </button>
         </div>
       </div>
