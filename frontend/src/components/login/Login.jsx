@@ -3,6 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { withApiBase } from "../../utils/apiBase";
 import { notifyAuthChanged } from "../../utils/appClient";
 import { useState } from "react";
+
+const apiFetch = async (url, options = {}) => {
+  const token = localStorage.getItem("token");
+  const headers = {
+    "Content-Type": "application/json",
+    ...(token && { "Authorization": `Bearer ${token}` }),
+    ...options.headers,
+  };
+  
+  const response = await fetch(withApiBase(url), {
+    ...options,
+    headers,
+  });
+  
+  return response;
+};
+
 export default function Login() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -45,22 +62,37 @@ export default function Login() {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        const token = localStorage.getItem("token");
+        
+        if (!token) {
+          setIsAuthenticated(false);
+          return;
+        }
+        
         const res = await apiFetch("/api/auth/me/");
         if (res.ok) {
-          setUser(await res.json());
+          const userData = await res.json();
+          setUser(userData);
           setIsAuthenticated(true);
+          navigate("/");
         } else {
           setIsAuthenticated(false);
+          localStorage.removeItem("token");
         }
       } catch {
         setIsAuthenticated(false);
+        localStorage.removeItem("token");
       }
     };
 
     checkAuth();
     window.addEventListener("authChanged", checkAuth);
     return () => window.removeEventListener("authChanged", checkAuth);
-  }, []);
+  }, [navigate]);
+
+  if (isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="page-bg flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-elevated)] gap-[var(--spacing-2xl)]">

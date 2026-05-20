@@ -89,7 +89,6 @@ export default function HomePage() {
     );
   }
 
-  // ================= LOGADO =================
   if (isAuthenticated && user) {
     return (
       <div className="page-bg mt-4 bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
