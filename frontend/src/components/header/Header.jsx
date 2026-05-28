@@ -12,9 +12,19 @@ export default function Header() {
   useEffect(() => {
     // Check auth status apenas uma vez
     const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        setIsAuthenticated(false);
+        setUser(null);
+        return;
+      }
+
       try {
         const res = await fetch(withApiBase("/api/auth/me/"), {
-          credentials: "include",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         });
 
         if (res.ok) {
@@ -30,11 +40,29 @@ export default function Header() {
         setIsAuthenticated(false);
         setUser(null);
       }
+    };
+
+    checkAuth();
+  }, []);
+
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      await fetch(withApiBase("/api/auth/logout/"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } catch (error) {
-      console.error("Auth check error:", error);
-      setIsAuthenticated(false);
-      setUser(null);
+      console.error(error);
     }
+
+    localStorage.removeItem("token");
+    setIsAuthenticated(false);
+    setUser(null);
+    navigate("/login");
   };
 
   checkAuth();
@@ -66,7 +94,7 @@ const handleLogout = async () => {
   const linkClass = ({ isActive }) => {
     const base = "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200";
     return isActive
-      ? `${base} bg-[var(--color-spotify-green)] text-black`
+      ? `${base} bg-[var(--color-spotify-green)] text-white`
       : `${base} text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]`;
   };
 

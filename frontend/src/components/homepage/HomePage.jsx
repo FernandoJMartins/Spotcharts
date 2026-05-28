@@ -137,29 +137,29 @@ useEffect(() => {
                   {user.display_name}
                 </span>
               </h1>
- 
-              <p className="text-[var(--color-text-secondary)] text-lg">
+
+              {/* <p className="text-[var(--color-text-secondary)] text-lg">
                 Spotify ID:{" "}
                 <span className="font-mono text-sm">
                   {user.spotify_id}
                 </span>
-              </p>
- 
+              </p> */}
+
               {user.email && (
                 <p className="text-[var(--color-text-secondary)] text-lg mt-1">
                   {user.email}
                 </p>
               )}
             </div>
- 
-            <button
+
+            {/* <button
               onClick={handleLogout}
               className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
               style={{ "--delay": "0.12s" }}
             >
               <LogOut size={18} />
               Sair
-            </button>
+            </button> */}
           </div>
 
           {/* Cards */}
@@ -244,8 +244,8 @@ useEffect(() => {
               <p className="text-[var(--color-text-secondary)] text-sm">
                 {user.last_sync
                   ? `Última atualização: ${new Date(
-                      user.last_sync
-                    ).toLocaleDateString("pt-BR")}`
+                    user.last_sync
+                  ).toLocaleDateString("pt-BR")}`
                   : "Nunca sincronizado"}
               </p>
             </div>
@@ -502,9 +502,9 @@ useEffect(() => {
 
       <section
         id="features"
-        className="bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg mx-4 p-20"
+        className=" mx-4 p-20"
       >
-        <div className="max-w-6xl mx-auto">
+        <div className="mx-auto">
           <h2
             className="text-5xl font-bold text-center mb-16 reveal"
             style={{ "--delay": "0.05s" }}
@@ -530,7 +530,7 @@ useEffect(() => {
                 icon: Zap,
                 title: "Rápido & Elegante",
                 description:
-                  "Interface limpa, escura e responsiva.",
+                  "Interface moderna e responsiva.",
               },
             ].map((feature, idx) => {
               const Icon = feature.icon;
@@ -538,14 +538,14 @@ useEffect(() => {
               return (
                 <div
                   key={idx}
-                  className="card reveal-scale"
+                  className="card2 reveal-scale"
                   style={{
                     "--delay": `${0.1 + idx * 0.08}s`,
                   }}
                 >
                   <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
                     <Icon
-                      className="text-[var(--color-spotify-green)]"
+                      className="text-white"
                       size={24}
                     />
                   </div>
