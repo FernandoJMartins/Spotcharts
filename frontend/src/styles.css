@@ -232,8 +232,13 @@ select:disabled {
   display: flex;
 }
 
+.card2 {
+  flex-direction: column;
+  margin: 12px auto;
+}
+
 @media (max-width: 600px) {
-  .card {
+  .card, .card2 {
     width: 95%;
   }
   width: 50%;
