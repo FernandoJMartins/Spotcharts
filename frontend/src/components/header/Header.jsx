@@ -78,10 +78,10 @@ export default function Header() {
     : [...publicLinks, { to: "/login", label: "Entrar" }];
 
   const linkClass = ({ isActive }) => {
-    const base = "px-4 py-2 rounded-full text-sm font-medium transition-all duration-200";
+    const base = "px-8 py-4 text-sm  transition-all duration-200";
     return isActive
-      ? `${base} bg-[var(--color-spotify-green)] text-white`
-      : `${base} text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]`;
+      ? `${base} text-green-500 font-semibold border-b-2 border-green-500`
+      : `${base} text-[var(--color-text-secondary)] `;
   };
 
   return (
@@ -107,16 +107,16 @@ export default function Header() {
         {/* Right Side (centralize do lado direito) */}
         <div className="flex items-center gap-4">
           {isAuthenticated && user && (
-            <div className="hidden sm:flex items-center gap-3">
-              <span className="text-sm text-[var(--color-text-secondary)]">
+            <div className="hidden sm:flex items-center">
+              {/* <span className="text-sm text-[var(--color-text-secondary)]">
                 {user.display_name || user.spotify_id}
-              </span>
+              </span> */}
               <button
                 onClick={handleLogout}
                 className="p-2 hover:bg-[var(--color-surface)] rounded-lg transition-colors"
                 title="Sair"
               >
-                <LogOut size={18} className="text-[var(--color-text-secondary)]" />
+                <LogOut size={18} className="text-red-500" />
               </button>
             </div>
           )}
