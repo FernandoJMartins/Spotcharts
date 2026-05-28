@@ -73,7 +73,7 @@ const handleLogout = async () => {
   return (
     <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)] border-b border-[var(--color-border-subtle)]">
 
-      <div className="flex items-center justify-between h-16">
+      <div className="flex items-center h-16">
         {/* Logo */}
         <NavLink to="/" className="flex items-center gap-2">
           <div className="text-[var(--color-spotify-green)] font-bold text-lg">
@@ -82,7 +82,7 @@ const handleLogout = async () => {
         </NavLink>
 
         {/* Desktop Nav */}
-        <nav className="hidden md:flex items-center gap-2">
+        <nav className="hidden md:flex justify-end items-center gap-2">
           {allLinks.map((link) => (
             <NavLink key={link.to} to={link.to} className={linkClass}>
               {link.label}
