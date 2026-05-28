@@ -50,11 +50,20 @@ class SpotifyClient:
             data['refresh_token_encrypted'] = encrypted
         return data
 
-    def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20):
+    def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0):
         # period mapping: short = short_term, medium = medium_term, long = long_term
         mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
         time_range = mapping.get(period, 'short_term')
         headers = {'Authorization': f'Bearer {access_token}'}
-        resp = requests.get(f"{SPOTIFY_API_BASE}/me/top/tracks", params={'time_range': time_range, 'limit': limit}, headers=headers)
+        params = {
+            'time_range': time_range,
+            'limit': limit,
+            'offset': offset,
+        }
+        resp = requests.get(
+            f"{SPOTIFY_API_BASE}/me/top/tracks",
+            params=params,
+            headers=headers,
+        )
         resp.raise_for_status()
         return resp.json()

@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urlencode
 
 from django.utils import timezone
+from django.core.cache import cache
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.shortcuts import redirect
@@ -19,9 +20,20 @@ from rest_framework import exceptions
 
 from .models import UserProfile
 from services.spotify_client import SpotifyClient
+from services.dashboard_service import (
+    build_track_items,
+    build_album_items_from_tracks,
+)
 from utils.crypto import decrypt_str
 
 from django.contrib.auth.models import AnonymousUser
+
+def _parse_int(value, default):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
 
 class JWTAuthentication(BaseAuthentication):
     """
@@ -923,11 +935,27 @@ class TopTracksView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
+        period = request.GET.get("period", "short")
+
+        limit = _parse_int(
+            request.GET.get("limit"),
+            10,
+        )
+
+        offset = _parse_int(
+            request.GET.get("offset"),
+            0,
+        )
+
+        limit = max(1, min(limit, 50))
+        offset = max(0, offset)
+
         try:
             payload = sc.get_top_tracks(
                 access_token,
                 period=period,
                 limit=limit,
+                offset=offset,
             )
         except Exception as exc:
             return Response(
@@ -953,6 +981,182 @@ class TopTracksView(APIView):
         return Response({
             "count": len(items),
             "items": items,
-            "mode": "spotify",
-            "period": period,
         })
+
+
+class TopItemsView(APIView):
+    """
+    Return dashboard items (tracks or albums) with aggregation and cache.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        item_type = request.GET.get("type", "tracks").lower()
+
+        if item_type not in ["tracks", "albums"]:
+            return Response(
+                {"detail": "invalid_type"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        period = request.GET.get("period", "short")
+
+        limit = _parse_int(
+            request.GET.get("limit"),
+            25,
+        )
+
+        offset = _parse_int(
+            request.GET.get("offset"),
+            0,
+        )
+
+        limit = max(1, min(limit, 50))
+        offset = max(0, offset)
+
+        cache_key = (
+            f"top-items:{user.spotify_id}:{item_type}:{period}:{limit}:{offset}"
+        )
+
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response(cached)
+
+        if not user.refresh_token_encrypted:
+            return Response(
+                {"detail": "no_refresh_token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+        redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
+
+        if not all([client_id, client_secret, redirect_uri]):
+            return Response(
+                {"detail": "server_not_configured"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        sc = SpotifyClient(
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+        )
+
+        access_token = getattr(request, "spotify_access_token", None)
+
+        if not access_token:
+            try:
+                refresh_token = decrypt_str(
+                    user.refresh_token_encrypted
+                )
+            except Exception:
+                return Response(
+                    {"detail": "invalid_refresh_token_storage"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            try:
+                data = sc.refresh_token(refresh_token)
+            except Exception as exc:
+                return Response(
+                    {
+                        "detail": "refresh_failed",
+                        "error": str(exc),
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            access_token = data.get("access_token")
+
+            if not access_token:
+                return Response(
+                    {"detail": "missing_access_token"},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            new_refresh_enc = data.get("refresh_token_encrypted")
+            expires_in = data.get("expires_in")
+
+            if new_refresh_enc:
+                user.refresh_token_encrypted = new_refresh_enc
+
+            if expires_in:
+                user.token_expires_at = (
+                    timezone.now()
+                    + timezone.timedelta(seconds=expires_in)
+                )
+
+            if new_refresh_enc or expires_in:
+                user.save()
+
+        try:
+            if item_type == "tracks":
+                payload = sc.get_top_tracks(
+                    access_token,
+                    period=period,
+                    limit=limit,
+                    offset=offset,
+                )
+
+                items = build_track_items(
+                    payload.get("items", []),
+                    offset=offset,
+                )
+
+                total = payload.get("total", len(items))
+            else:
+                source_limit = max(limit + offset, 20)
+                source_limit = min(50, source_limit)
+
+                payload = sc.get_top_tracks(
+                    access_token,
+                    period=period,
+                    limit=source_limit,
+                    offset=0,
+                )
+
+                album_items = build_album_items_from_tracks(
+                    payload.get("items", [])
+                )
+
+                total = len(album_items)
+                items = album_items[offset:offset + limit]
+
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        user.last_sync = timezone.now()
+        user.save(update_fields=["last_sync"])
+
+        response_payload = {
+            "type": item_type,
+            "period": period,
+            "limit": limit,
+            "offset": offset,
+            "total": total,
+            "count": len(items),
+            "items": items,
+        }
+
+        cache_ttl = _parse_int(
+            os.environ.get("SPOTIFY_CACHE_TTL"),
+            300,
+        )
+
+        if cache_ttl > 0:
+            cache.set(cache_key, response_payload, cache_ttl)
+
+        return Response(response_payload)

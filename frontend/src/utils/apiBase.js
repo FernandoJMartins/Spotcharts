@@ -23,14 +23,33 @@ export const authHeaders = () => {
     : {};
 };
 
+const apiGet = async (path) => {
+  const res = await fetch(withApiBase(path), {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+  });
+
+  return res;
+};
+
+const apiGetJson = async (path) => {
+  const res = await apiGet(path);
+  let data = null;
+
+  try {
+    data = await res.json();
+  } catch (error) {
+    data = null;
+  }
+
+  return { res, data };
+};
+
 export const api = {
-    get: async (path) => {
-        const res = await fetch(withApiBase(path), {
-            method: "GET",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json",
-                ...authHeaders(),
-            },
-        });
-    }}
+  get: apiGet,
+  getJson: apiGetJson,
+};

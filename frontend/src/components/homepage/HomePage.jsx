@@ -123,9 +123,10 @@ useEffect(() => {
           <div className="hero-orb orb-2" />
           <div className="hero-grid" />
         </div>
- 
-        <div className="max-w-7xl items-center justify-center mx-auto relative z-10">
-          <div className="w-full max-w-4xl mx-auto flex flex-col items-center text-center gap-6 mb-16">
+
+        <div className="mx-auto relative z-10 flex flex-col items-center text-center">
+          {/* Header */}
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
             <div className="flex flex-col items-center">
               <h1
                 className="text-5xl font-extrabold mb-2 reveal"
@@ -160,37 +161,93 @@ useEffect(() => {
               Sair
             </button>
           </div>
- 
-          <div className="w-full mb-12">
-            <h2 className="text-2xl font-bold mb-6 text-center reveal" style={{ "--delay": "0.15s" }}>
-              Suas Estatísticas
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statsCards.map((stat, idx) => {
-                const Icon = stat.icon;
-                return (
-                  <div
-                    key={idx}
-                    className="card reveal-scale"
-                    style={{ "--delay": `${0.18 + idx * 0.05}s` }}
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="w-12 h-12 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                        <Icon className="text-[var(--color-spotify-green)]" size={24} />
-                      </div>
-                    </div>
-                    <p className="text-[var(--color-text-secondary)] text-sm mb-2">
-                      {stat.label}
-                    </p>
-                    <div className="flex items-end justify-between">
-                      <p className="text-3xl font-bold">{stat.value}</p>
-                      <span className="text-[var(--color-spotify-green)] text-sm font-medium">
-                        {stat.trend}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+
+          {/* Cards */}
+          <div className="mx-auto flex  gap-6 mb-12 justify-items-center">
+            {/* Perfil */}
+            <div
+              className="card reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.12s" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Perfil
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <BarChart3
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                {user.display_name}
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                Conta Spotify ativa
+              </p>
+            </div>
+
+            {/* Tracks */}
+            <div
+              className="card cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.2s" }}
+              onClick={() => navigate("/graficos")}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Top Faixas
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <TrendingUp
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                Visualizar
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                Suas músicas mais ouvidas
+              </p>
+            </div>
+
+            {/* Sync */}
+            <div
+              className="card reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.28s" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Sincronização
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <Zap
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                {user.last_sync ? "✓" : "−"}
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                {user.last_sync
+                  ? `Última atualização: ${new Date(
+                      user.last_sync
+                    ).toLocaleDateString("pt-BR")}`
+                  : "Nunca sincronizado"}
+              </p>
             </div>
           </div>
  

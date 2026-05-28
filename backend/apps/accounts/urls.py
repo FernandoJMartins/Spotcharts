@@ -7,6 +7,7 @@ urlpatterns = [
     path('me/', views.MeView.as_view(), name='auth-me'),
     path("guest/", views.GuestLoginView.as_view()),
     path('top-tracks/', views.TopTracksView.as_view(), name='auth-top-tracks'),
+    path('top-items/', views.TopItemsView.as_view(), name='auth-top-items'),
     path('refresh/', views.RefreshTokenView.as_view(), name='auth-refresh'),
     path('logout/', views.LogoutView.as_view(), name='auth-logout'),
 ]
