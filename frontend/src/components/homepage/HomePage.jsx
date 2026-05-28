@@ -100,7 +100,6 @@ export default function HomePage() {
         </div>
 
         <div className="mx-auto py-2  relative z-10 flex flex-col items-center text-center">
-          {/* Header */}
           
 
           {/* Cards */}
