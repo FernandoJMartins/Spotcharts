@@ -124,7 +124,7 @@ useEffect(() => {
           <div className="hero-grid" />
         </div>
 
-        <div className="mx-auto relative z-10 flex flex-col items-center text-center">
+        <div className="mx-auto relative z-10 flex flex-col  items-center text-center">
           {/* Header */}
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
             <div className="flex flex-col items-center">
@@ -145,11 +145,11 @@ useEffect(() => {
                 </span>
               </p> */}
 
-              {user.email && (
+              {/* {user.email && (
                 <p className="text-[var(--color-text-secondary)] text-lg mt-1">
                   {user.email}
-                </p>
-              )}
+                </p> */}
+          
             </div>
 
             {/* <button
