@@ -449,7 +449,7 @@ export default function Charts() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 text-xs sm:text-sm text-[var(--color-text-secondary)]">
+        <div className="flex  flex-col sm:flex-row sm:items-center justify-between gap-2 mb-6 text-xs sm:text-sm text-[var(--color-text-secondary)]">
           <span>
             {total !== null ? `${total} itens encontrados` : "Carregando dados"}
           </span>
