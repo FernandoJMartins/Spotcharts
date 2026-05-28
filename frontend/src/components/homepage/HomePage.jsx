@@ -1,605 +1,160 @@
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { withApiBase } from "../../utils/apiBase";
-import { LogOut, BarChart3, TrendingUp, Zap, Music, Clock, Headphones, Award } from 'lucide-react';
+import { useState, useEffect } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { Menu, X, LogOut } from "lucide-react";
 import { apiFetch } from "../../utils/appClient";
-import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import './home.css'
-export default function HomePage() {
-  const listeningHistoryData = [
-    { month: 'Jan', plays: 420 },
-    { month: 'Fev', plays: 580 },
-    { month: 'Mar', plays: 750 },
-    { month: 'Abr', plays: 690 },
-    { month: 'Mai', plays: 920 },
-    { month: 'Jun', plays: 1100 },
-  ];
- 
-  const topGenresData = [
-    { genre: 'Pop', count: 45 },
-    { genre: 'Rock', count: 38 },
-    { genre: 'Hip Hop', count: 32 },
-    { genre: 'Eletrônica', count: 28 },
-    { genre: 'Indie', count: 22 },
-  ];
- 
-  const listeningTimeData = [
-    { name: 'Manhã', value: 18, color: '#1DB954' },
-    { name: 'Tarde', value: 35, color: '#1ed760' },
-    { name: 'Noite', value: 32, color: '#22c55e' },
-    { name: 'Madrugada', value: 15, color: '#16a34a' },
-  ];
- 
-  const statsCards = [
-    { icon: Music, label: 'Total de Plays', value: '4,460', trend: '+12%' },
-    { icon: Clock, label: 'Horas Ouvidas', value: '156h', trend: '+8%' },
-    { icon: Headphones, label: 'Artistas Únicos', value: '87', trend: '+15%' },
-    { icon: Award, label: 'Top Gênero', value: 'Pop', trend: '45 plays' },
-  ];
 
+export default function Header() {
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
 
-
-useEffect(() => {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    setLoading(false);
-    return;
-  }
-
-  const checkAuth = async () => {
-    try {
-      const res = await apiFetch("/api/auth/me/");
-
-      if (!res.ok) {
-        // localStorage.removeItem("token");
+  // ==================== AUTENTICAÇÃO ====================
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
         setIsAuthenticated(false);
         setUser(null);
         return;
       }
 
-      const data = await res.json();
-      setIsAuthenticated(true);
-      setUser(data);
+      try {
+        const res = await apiFetch("/api/auth/me/");
+        if (!res.ok) throw new Error("Token inválido");
 
-    } catch (error) {
-      console.error("Auth check error:", error);
-      // localStorage.removeItem("token");
-      setIsAuthenticated(false);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  };
+        const data = await res.json();
+        setIsAuthenticated(true);
+        setUser(data);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        setIsAuthenticated(false);
+        setUser(null);
+      }
+    };
 
-  checkAuth();
-}, []);
+    checkAuth();
+  }, []);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
-
     try {
-      await apiFetch("/api/auth/logout/", {
-  method: "POST",
-});
+      await apiFetch("/api/auth/logout/", { method: "POST" });
     } catch (error) {
-      console.error(error);
+      console.error("Logout error:", error);
     }
 
     localStorage.removeItem("token");
-
     setIsAuthenticated(false);
     setUser(null);
-
-    navigate("/");
+    navigate("/login");
   };
 
-  if (loading) {
-    return (
-      <div className="page-bg flex flex-col items-center justify-center min-h-screen bg-[var(--color-bg-elevated)] gap-[var(--spacing-2xl)]">
-        <div className="text-center">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
-            <div className="w-8 h-8 border-3 border-[var(--color-spotify-green)] border-t-transparent rounded-full animate-spin"></div>
-          </div>
+  // ==================== LINKS ====================
+  const publicLinks = [{ to: "/", label: "Início" }];
+  const protectedLinks = [{ to: "/graficos", label: "Gráficos" }];
 
-          <p className="text-[var(--color-text-secondary)]">
-            Carregando...
-          </p>
-        </div>
-      </div>
-    );
-  }
+  const allLinks = isAuthenticated
+    ? [...publicLinks, ...protectedLinks]
+    : [...publicLinks, { to: "/login", label: "Entrar" }];
 
-  if (isAuthenticated && user) {
-    return (
-      <div className="items-center page-bg bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
-        <div className="hero-ornaments" aria-hidden="true">
-          <div className="hero-orb orb-1" />
-          <div className="hero-orb orb-2" />
-          <div className="hero-grid" />
-        </div>
+  const linkClass = ({ isActive }) =>
+    `px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg ${
+      isActive
+        ? "text-[var(--color-spotify-green)] bg-[var(--color-spotify-green)]/10 shadow-sm"
+        : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-surface)]"
+    }`;
 
-        <div className="mx-auto relative z-10 flex flex-col  items-center text-center">
-          {/* Header */}
-          <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
-            <div className="flex flex-col items-center">
-              <h1
-                className="text-5xl font-extrabold mb-2 reveal"
-                style={{ "--delay": "0.05s" }}
-              >
-                Bem-vindo,{" "}
-                <span className="text-[var(--color-spotify-green)] glow-text">
-                  {user.display_name}
-                </span>
-              </h1>
-
-              {/* <p className="text-[var(--color-text-secondary)] text-lg">
-                Spotify ID:{" "}
-                <span className="font-mono text-sm">
-                  {user.spotify_id}
-                </span>
-              </p> */}
-
-              {/* {user.email && (
-                <p className="text-[var(--color-text-secondary)] text-lg mt-1">
-                  {user.email}
-                </p> */}
-          
-            </div>
-
-            {/* <button
-              onClick={handleLogout}
-              className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
-              style={{ "--delay": "0.12s" }}
-            >
-              <LogOut size={18} />
-              Sair
-            </button> */}
-          </div>
-
-          {/* Cards */}
-          <div className="mx-auto flex-column gap-6 mb-12 justify-items-center md:flex">
-            {/* Perfil */}
-            <div
-              className="card2 reveal-scale w-full max-w-sm"
-              style={{ "--delay": "0.12s" }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Perfil
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <BarChart3
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
-                </div>
-              </div>
-
-              <p className="text-3xl font-bold mb-2">
-                {user.display_name}
-              </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                Conta Spotify ativa
-              </p>
-            </div>
-
-            {/* Tracks */}
-            <div
-              className="card2 cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale"
-              style={{ "--delay": "0.2s" }}
-              onClick={() => navigate("/graficos")}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Top Faixas
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <TrendingUp
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
-                </div>
-              </div>
-
-              <p className="text-3xl font-bold mb-2">
-                Visualizar
-              </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                Suas músicas mais ouvidas
-              </p>
-            </div>
-
-            {/* Sync */}
-            <div
-              className="card2 reveal-scale w-full max-w-sm"
-              style={{ "--delay": "0.28s" }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Sincronização
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <Zap
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
-                </div>
-              </div>
-
-              <p className="text-3xl font-bold mb-2">
-                {user.last_sync ? "✓" : "−"}
-              </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                {user.last_sync
-                  ? `Última atualização: ${new Date(
-                    user.last_sync
-                  ).toLocaleDateString("pt-BR")}`
-                  : "Nunca sincronizado"}
-              </p>
-            </div>
-          </div>
- 
-          {/* Charts Section */}
-          <div className="items-center mx-auto w-full mb-12 grid lg:grid-cols-2 gap-8">
-            {/* Listening History Chart */}
-            <div
-              className="card reveal-scale"
-              style={{ "--delay": "0.4s" }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Histórico de Reproduções</h3>
-                <TrendingUp className="text-[var(--color-spotify-green)]" size={24} />
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={listeningHistoryData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" opacity={0.3} />
-                  <XAxis 
-                    dataKey="month" 
-                    stroke="var(--color-text-secondary)"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis 
-                    stroke="var(--color-text-secondary)"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-surface)',
-                      border: '1px solid var(--color-border-subtle)',
-                      borderRadius: '8px',
-                      color: 'var(--color-text-primary)',
-                    }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="plays"
-                    stroke="var(--color-spotify-green)"
-                    strokeWidth={3}
-                    dot={{ fill: 'var(--color-spotify-green)', r: 5 }}
-                    activeDot={{ r: 7 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
- 
-            <div
-              className="card reveal-scale"
-              style={{ "--delay": "0.45s" }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Top Gêneros</h3>
-                <BarChart3 className="text-[var(--color-spotify-green)]" size={24} />
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={topGenresData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border-subtle)" opacity={0.3} />
-                  <XAxis 
-                    dataKey="genre" 
-                    stroke="var(--color-text-secondary)"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <YAxis 
-                    stroke="var(--color-text-secondary)"
-                    style={{ fontSize: '12px' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-surface)',
-                      border: '1px solid var(--color-border-subtle)',
-                      borderRadius: '8px',
-                      color: 'var(--color-text-primary)',
-                    }}
-                  />
-                  <Bar 
-                    dataKey="count" 
-                    fill="var(--color-spotify-green)"
-                    radius={[8, 8, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
- 
-            <div
-              className="card reveal-scale"
-              style={{ "--delay": "0.5s" }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Distribuição de Escuta</h3>
-                <Clock className="text-[var(--color-spotify-green)]" size={24} />
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie
-                    data={listeningTimeData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={90}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {listeningTimeData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'var(--color-surface)',
-                      border: '1px solid var(--color-border-subtle)',
-                      borderRadius: '8px',
-                      color: 'var(--color-text-primary)',
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
- 
-            {/* Profile Summary Card */}
-            <div
-              className="card reveal-scale"
-              style={{ "--delay": "0.55s" }}
-            >
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold">Resumo do Perfil</h3>
-                <BarChart3 className="text-[var(--color-spotify-green)]" size={24} />
-              </div>
-              
-              <div className="space-y-6">
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                    <Music className="text-[var(--color-spotify-green)]" size={28} />
-                  </div>
-                  <div>
-                    <p className="text-2xl font-bold">{user.display_name}</p>
-                    <p className="text-[var(--color-text-secondary)] text-sm">Conta Spotify ativa</p>
-                  </div>
-                </div>
- 
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center py-3 border-b border-[var(--color-border-subtle)]">
-                    <span className="text-[var(--color-text-secondary)]">Última sincronização</span>
-                    <span className="font-semibold">
-                      {user.last_sync
-                        ? new Date(user.last_sync).toLocaleDateString("pt-BR")
-                        : "Nunca"}
-                    </span>
-                  </div>
-                  
-                  <div className="flex justify-between items-center py-3 border-b border-[var(--color-border-subtle)]">
-                    <span className="text-[var(--color-text-secondary)]">Membro desde</span>
-                    <span className="font-semibold">2023</span>
-                  </div>
- 
-                  <div className="flex justify-between items-center py-3">
-                    <span className="text-[var(--color-text-secondary)]">Status</span>
-                    <span className="flex items-center gap-2">
-                      <div className="w-2 h-2 bg-[var(--color-spotify-green)] rounded-full animate-pulse" />
-                      <span className="font-semibold text-[var(--color-spotify-green)]">Ativo</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
- 
-          <div
-            className="w-full max-w-5xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
-            style={{ "--delay": "0.6s" }}
-          >
-            <h2 className="text-3xl font-bold mb-4">
-              Pronto para explorar?
-            </h2>
- 
-            <p className="text-[var(--color-text-secondary)] mb-8 max-w-md mx-auto">
-              Visualize seus top tracks, artistas, tendências e muito mais em gráficos interativos detalhados.
-            </p>
- 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <button
-                onClick={() => navigate("/graficos")}
-                className="btn-primary px-8 py-4 text-lg w-full sm:w-auto"
-              >
-                Ver Gráficos →
-              </button>
- 
-              <button
-                onClick={() => navigate("/top-tracks")}
-                className="btn-secondary px-8 py-4 text-lg w-full sm:w-auto"
-              >
-                Ver Top Tracks →
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-
-  }
-
-  // ================= NÃO LOGADO =================
   return (
-    <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
-      {/* Hero */}
-      <section className="relative flex-1 flex items-center justify-center px-4 py-20">
-        <div className="hero-ornaments" aria-hidden="true">
-          <div className="hero-orb orb-1" />
-          <div className="hero-orb orb-2" />
-          <div className="hero-grid" />
-        </div>
-
-        <div className="max-w-2xl w-full text-center relative z-10">
-          <h1 className="text-7xl font-extrabold mb-6 leading-tight reveal">
-            Seus dados
-            <br />
-
-            <span className="text-[var(--color-spotify-green)] glow-text">
-              com clareza visual.
+    <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)]/80 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Layout grid: 3 colunas -> logo | nav centralizado | usuário */}
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16">
+          {/* Coluna 1 - Logo (alinhada à esquerda) */}
+          <NavLink to="/" className="flex items-center gap-2 shrink-0 justify-self-start">
+            <span className="text-[var(--color-spotify-green)] font-bold text-xl tracking-tight">
+              ◉ CHARTS
             </span>
-          </h1>
+          </NavLink>
 
-          <p
-            className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed reveal"
-            style={{ "--delay": "0.08s" }}
-          >
-            Conecte sua conta Spotify e transforme seus top
-            tracks, artistas e tendências em visualizações
-            impressionantes.
-          </p>
+          {/* Coluna 2 - Navegação (centralizada) */}
+          <nav className="hidden md:flex items-center gap-1 justify-self-center">
+            {allLinks.map((link) => (
+              <NavLink key={link.to} to={link.to} className={linkClass}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
 
-          <div
-            className="flex flex-col sm:flex-row gap-4 justify-center reveal"
-            style={{ "--delay": "0.16s" }}
-          >
-            <button
-              onClick={() => navigate("/login")}
-              className="btn-primary px-8 py-4 text-lg"
-            >
-              Começar Agora
-            </button>
-
-            <a
-              href="#features"
-              className="btn-secondary px-8 py-4 text-lg"
-            >
-              Ver Features ↓
-            </a>
-          </div>
-        </div>
-      </section>
-
-      <section
-        id="features"
-        className=" mx-4 p-20"
-      >
-        <div className="mx-auto">
-          <h2
-            className="text-5xl font-bold text-center mb-16 reveal"
-            style={{ "--delay": "0.05s" }}
-          >
-            Recursos Principais
-          </h2>
-
-          <div className="flex gap-8">
-            {[
-              {
-                icon: BarChart3,
-                title: "Visualizações Poderosas",
-                description:
-                  "Gráficos de barras, linhas, donuts e mais.",
-              },
-              {
-                icon: TrendingUp,
-                title: "Análise Temporal",
-                description:
-                  "Acompanhe suas preferências musicais.",
-              },
-              {
-                icon: Zap,
-                title: "Rápido & Elegante",
-                description:
-                  "Interface moderna e responsiva.",
-              },
-            ].map((feature, idx) => {
-              const Icon = feature.icon;
-
-              return (
-                <div
-                  key={idx}
-                  className="card2 reveal-scale"
-                  style={{
-                    "--delay": `${0.1 + idx * 0.08}s`,
-                  }}
+          {/* Coluna 3 - Área do usuário (alinhada à direita) */}
+          <div className="hidden md:flex items-center gap-4 justify-self-end">
+            {isAuthenticated && user && (
+              <div className="flex items-center gap-3">
+                <span className="text-sm text-[var(--color-text-secondary)] truncate max-w-[160px]">
+                  {user.display_name || user.spotify_id}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  className="p-2 hover:bg-[var(--color-surface)] rounded-lg transition-colors"
+                  title="Sair"
                 >
-                  <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
-                    <Icon
-                      className="text-white"
-                      size={24}
-                    />
-                  </div>
-
-                  <h3 className="text-xl font-bold mb-3">
-                    {feature.title}
-                  </h3>
-
-                  <p className="text-[var(--color-text-secondary)]">
-                    {feature.description}
-                  </p>
-                </div>
-              );
-            })}
+                  <LogOut size={18} className="text-red-400 hover:text-red-500 transition-colors" />
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      </section>
 
-      {/* CTA */}
-      <section className="bg-[var(--color-bg-elevated)] py-20 px-4">
-        <div className="max-w-2xl mx-auto text-center">
-          <h2
-            className="text-4xl font-bold mb-6 reveal"
-            style={{ "--delay": "0.05s" }}
-          >
-            Pronto para explorar seus dados?
-          </h2>
-
-          <p
-            className="text-lg text-[var(--color-text-secondary)] mb-8 reveal"
-            style={{ "--delay": "0.12s" }}
-          >
-            Conecte com Spotify e comece agora.
-          </p>
-
+          {/* Botão menu mobile (aparece no lugar da grid no mobile, mas ainda dentro do flex) */}
           <button
-            onClick={() => navigate("/login")}
-            className="btn-primary px-8 py-4 text-lg reveal"
-            style={{ "--delay": "0.2s" }}
+            className="md:hidden p-2 rounded-lg hover:bg-[var(--color-surface)] transition-colors justify-self-end"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Abrir menu"
           >
-            Conectar com Spotify
+            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
           </button>
         </div>
-      </section>
 
-      {/* Footer */}
-      <footer className="border-t border-[var(--color-border-subtle)] py-8 px-4">
-        <div className="max-w-6xl mx-auto text-center text-sm text-[var(--color-text-secondary)]">
-          <p>
-            SpotifyCharts © 2026 • Dados & Visualizações
-            Musicais
-          </p>
-        </div>
-      </footer>
-    </div>
+        {/* Menu mobile */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-[var(--color-border-subtle)] py-4 animate-fade-in">
+            <nav className="flex flex-col items-center gap-2">
+              {allLinks.map((link) => (
+                <NavLink
+                  key={link.to}
+                  to={link.to}
+                  className={({ isActive }) =>
+                    `px-6 py-2 text-sm font-medium w-full text-center transition-all duration-200 rounded-lg ${
+                      isActive
+                        ? "text-[var(--color-spotify-green)] bg-[var(--color-spotify-green)]/10"
+                        : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-surface)]"
+                    }`
+                  }
+                  onClick={() => setMobileOpen(false)}
+                >
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+
+            {isAuthenticated && user && (
+              <div className="mt-4 pt-4 border-t border-[var(--color-border-subtle)] flex flex-col items-center gap-3">
+                <span className="text-sm text-[var(--color-text-secondary)]">
+                  {user.display_name || user.spotify_id}
+                </span>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setMobileOpen(false);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-[var(--color-surface)] rounded-lg transition-colors w-full justify-center"
+                >
+                  <LogOut size={18} />
+                  Sair
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </header>
   );
 }
