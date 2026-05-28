@@ -6,6 +6,7 @@ urlpatterns = [
     path('callback/', views.AuthCallbackView.as_view(), name='auth-callback'),
     path('me/', views.MeView.as_view(), name='auth-me'),
     path('top-tracks/', views.TopTracksView.as_view(), name='auth-top-tracks'),
+    path('top-items/', views.TopItemsView.as_view(), name='auth-top-items'),
     path('refresh/', views.RefreshTokenView.as_view(), name='auth-refresh'),
     path('logout/', views.LogoutView.as_view(), name='auth-logout'),
 ]

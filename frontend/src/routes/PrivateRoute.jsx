@@ -6,7 +6,7 @@ import { api } from "../utils/apiBase";
 export default function PrivateRoute({
   children,
 }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(null);
 
   useEffect(() => {
     const checkAuth = async () => {

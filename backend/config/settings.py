@@ -83,6 +83,14 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+# Local cache for recent Spotify queries (override with Redis in production)
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'spotcharts-cache',
+    }
+}
+
 # CORS configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",

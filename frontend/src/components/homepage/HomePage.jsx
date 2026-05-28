@@ -99,7 +99,7 @@ export default function HomePage() {
           <div className="hero-grid" />
         </div>
 
-        <div className="max-w-6xl mx-auto relative z-10 flex flex-col items-center text-center">
+        <div className="mx-auto relative z-10 flex flex-col items-center text-center">
           {/* Header */}
           <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
             <div className="flex flex-col items-center">
@@ -138,7 +138,7 @@ export default function HomePage() {
           </div>
 
           {/* Cards */}
-          <div className="w-full max-w-5xl mx-auto grid md:grid-cols-3 gap-6 mb-12 justify-items-center">
+          <div className="mx-auto flex  gap-6 mb-12 justify-items-center">
             {/* Perfil */}
             <div
               className="card reveal-scale w-full max-w-sm"
