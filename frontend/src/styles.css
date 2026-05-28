@@ -232,6 +232,14 @@ select:disabled {
   display: flex;
 }
 
+@media (max-width: 600px) {
+  .card {
+    width: 95%;
+  }
+  width: 50%;
+  display: flex;
+}
+
 .card2 {
   flex-direction: column;
   margin: 12px auto;
@@ -360,6 +368,32 @@ select:disabled {
   50% {
     transform: translateX(30px);
     opacity: 1;
+  }
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+  animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
 }
 
