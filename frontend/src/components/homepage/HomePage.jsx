@@ -138,10 +138,10 @@ export default function HomePage() {
           </div>
 
           {/* Cards */}
-          <div className="mx-auto flex  gap-6 mb-12 justify-items-center">
+          <div className="mx-auto flex-column gap-6 mb-12 justify-items-center md:flex">
             {/* Perfil */}
             <div
-              className="card reveal-scale w-full max-w-sm"
+              className="card2 reveal-scale w-full max-w-sm"
               style={{ "--delay": "0.12s" }}
             >
               <div className="flex items-center justify-between mb-4">
@@ -168,7 +168,7 @@ export default function HomePage() {
 
             {/* Tracks */}
             <div
-              className="card cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale w-full max-w-sm"
+              className="card2 cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale"
               style={{ "--delay": "0.2s" }}
               onClick={() => navigate("/graficos")}
             >
@@ -196,7 +196,7 @@ export default function HomePage() {
 
             {/* Sync */}
             <div
-              className="card reveal-scale w-full max-w-sm"
+              className="card2 reveal-scale w-full max-w-sm"
               style={{ "--delay": "0.28s" }}
             >
               <div className="flex items-center justify-between mb-4">
