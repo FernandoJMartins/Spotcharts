@@ -1,15 +1,13 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
-import { apiFetch } from "../../utils/appClient";
+import { LogOut } from "lucide-react";
+import { withApiBase } from "../../utils/apiBase";
 
 export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // ==================== AUTENTICAÇÃO ====================
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
@@ -46,8 +44,13 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
 
+  localStorage.removeItem("token");
+  setIsAuthenticated(false);
+  setUser(null);
+
+  if (token) {
     try {
       await fetch(withApiBase("/api/auth/logout/"), {
         method: "POST",
@@ -56,71 +59,63 @@ export default function Header() {
         },
       });
     } catch (error) {
-      console.error(error);
+      console.error("Erro ao notificar logout:", error);
     }
+  }
 
-    localStorage.removeItem("token");
-    setIsAuthenticated(false);
-    setUser(null);
-    navigate("/login");
-  };
+  navigate("/login", { replace: true });
+};
 
-  // ==================== LINKS ====================
-  const publicLinks = [{ to: "/", label: "Início" }];
-  const protectedLinks = [{ to: "/graficos", label: "Gráficos" }];
+  const publicLinks = [
+    { to: "/", label: "Início" },
+  ];
+
+  const protectedLinks = [
+    { to: "/graficos", label: "Gráficos" },
+  ];
 
   const allLinks = isAuthenticated
     ? [...publicLinks, ...protectedLinks]
     : [...publicLinks, { to: "/login", label: "Entrar" }];
 
   const linkClass = ({ isActive }) => {
-    const base = "px-8 py-4 text-sm  transition-all duration-200";
+    const base = "px-8 py-4 text-sm transition-all duration-200";
+
     return isActive
       ? `${base} text-green-500 font-semibold border-b-2 border-green-500`
-      : `${base} text-[var(--color-text-secondary)] `;
+      : `${base} text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]`;
   };
 
   return (
     <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)] border-b border-[var(--color-border-subtle)]">
-
-      <div className="flex items-center h-16">
-        {/* Logo */}
-        <NavLink to="/" className="flex items-center gap-2">
-          <div className="text-[var(--color-spotify-green)] font-bold text-lg">
-            ◉ CHARTS
-          </div>
-        </NavLink>
-
-        {/* Desktop Nav */}
-        <nav className="hidden md:flex justify-end items-center gap-2">
-          {allLinks.map((link) => (
-            <NavLink key={link.to} to={link.to} className={linkClass}>
-              {link.label}
-            </NavLink>
-          ))}
-        </nav>
-
-        {/* Right Side (centralize do lado direito) */}
-        <div className="flex items-center gap-4">
-          {isAuthenticated && user && (
-            <div className="hidden sm:flex items-center">
-              {/* <span className="text-sm text-[var(--color-text-secondary)]">
-                {user.display_name || user.spotify_id}
-              </span> */}
-              <button
-                onClick={handleLogout}
-                className="p-2 hover:bg-[var(--color-surface)] rounded-lg transition-colors"
-                title="Sair"
-              >
-                <LogOut size={18} className="text-red-500" />
-              </button>
-            </div>
-          )}
-
-        </div>
+  <div className="relative flex items-center justify-between h-16 px-6">
+    
+    <NavLink to="/">
+      <div className="text-[var(--color-spotify-green)] font-bold text-lg">
+        ◉ CHARTS
       </div>
+    </NavLink>
 
+    <nav className="absolute left-1/2 -translate-x-1/2 hidden md:flex items-center gap-2">
+      {allLinks.map((link) => (
+        <NavLink key={link.to} to={link.to} className={linkClass}>
+          {link.label}
+        </NavLink>
+      ))}
+    </nav>
 
-    </header>
+    <div>
+      {isAuthenticated && user && (
+        <button
+          onClick={handleLogout}
+          className="p-2 hover:bg-[var(--color-surface)] rounded-lg"
+        >
+          <LogOut size={18} className="text-red-500" />
+        </button>
+      )}
+    </div>
+
+  </div>
+</header>
   );
 }

@@ -12,7 +12,6 @@ import PrivateRoute from "./PrivateRoute";
 import Header from "../components/header/Header";
 import TopTracks from "../components/pages/TopTrack";
 
-// Layout wrapper to conditionally show header
 function LayoutWrapper({ children }) {
   const location = useLocation();
   const hideHeader = ["/login", "/registro", "/auth/success"].includes(

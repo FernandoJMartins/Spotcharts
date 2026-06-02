@@ -1,35 +1,50 @@
-import { useState, useEffect } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, LogOut } from "lucide-react";
-import { apiFetch } from "../../utils/appClient";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BarChart3, TrendingUp, Zap, LogOut } from "lucide-react";
+import { withApiBase } from "../../utils/apiBase";
 
-export default function Header() {
-  const [mobileOpen, setMobileOpen] = useState(false);
+export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   const navigate = useNavigate();
 
-  // ==================== AUTENTICAÇÃO ====================
   useEffect(() => {
-    const checkAuth = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setIsAuthenticated(false);
-        setUser(null);
-        return;
-      }
+    const token = localStorage.getItem("token");
 
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    const checkAuth = async () => {
       try {
-        const res = await apiFetch("/api/auth/me/");
-        if (!res.ok) throw new Error("Token inválido");
+        const res = await fetch(withApiBase("/api/auth/me/"), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!res.ok) {
+          localStorage.removeItem("token");
+          setIsAuthenticated(false);
+          setUser(null);
+          return;
+        }
 
         const data = await res.json();
+
         setIsAuthenticated(true);
         setUser(data);
       } catch (error) {
         console.error("Auth check error:", error);
+
+        localStorage.removeItem("token");
         setIsAuthenticated(false);
         setUser(null);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -37,70 +52,56 @@ export default function Header() {
   }, []);
 
   const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+
     try {
-      await apiFetch("/api/auth/logout/", { method: "POST" });
+      await fetch(withApiBase("/api/auth/logout/"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error(error);
     }
 
     localStorage.removeItem("token");
+
     setIsAuthenticated(false);
     setUser(null);
-    navigate("/login");
+
+    navigate("/");
   };
 
-  // ==================== LINKS ====================
-  const publicLinks = [{ to: "/", label: "Início" }];
-  const protectedLinks = [{ to: "/graficos", label: "Gráficos" }];
-
-  const allLinks = isAuthenticated
-    ? [...publicLinks, ...protectedLinks]
-    : [...publicLinks, { to: "/login", label: "Entrar" }];
-
-  const linkClass = ({ isActive }) =>
-    `px-4 py-2 text-sm font-medium transition-all duration-200 rounded-lg ${
-      isActive
-        ? "text-[var(--color-spotify-green)] bg-[var(--color-spotify-green)]/10 shadow-sm"
-        : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-surface)]"
-    }`;
-
-        <div className="mx-auto relative z-10 flex flex-col  items-center text-center">
-          {/* Header */}
-          <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
-            <div className="flex flex-col items-center">
-              <h1
-                className="text-5xl font-extrabold mb-2 reveal"
-                style={{ "--delay": "0.05s" }}
-              >
-                Bem-vindo,{" "}
-                <span className="text-[var(--color-spotify-green)] glow-text">
-                  {user.display_name}
-                </span>
-              </h1>
-
-              {/* <p className="text-[var(--color-text-secondary)] text-lg">
-                Spotify ID:{" "}
-                <span className="font-mono text-sm">
-                  {user.spotify_id}
-                </span>
-              </p> */}
-
-              {/* {user.email && (
-                <p className="text-[var(--color-text-secondary)] text-lg mt-1">
-                  {user.email}
-                </p> */}
-          
-            </div>
-
-            {/* <button
-              onClick={handleLogout}
-              className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
-              style={{ "--delay": "0.12s" }}
-            >
-              <LogOut size={18} />
-              Sair
-            </button> */}
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[var(--color-bg-elevated)]">
+        <div className="text-center">
+          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
+            <div className="w-8 h-8 border-3 border-[var(--color-spotify-green)] border-t-transparent rounded-full animate-spin"></div>
           </div>
+
+          <p className="text-[var(--color-text-secondary)]">
+            Carregando...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= LOGADO =================
+  if (isAuthenticated && user) {
+    return (
+      <div className="page-bg mt-4 bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
+        <div className="hero-ornaments" aria-hidden="true">
+          <div className="hero-orb orb-1" />
+          <div className="hero-orb orb-2" />
+          <div className="hero-grid" />
+        </div>
+
+        <div className="mx-auto py-2  relative z-10 flex flex-col items-center text-center">
+          {/* Header */}
+          
 
           {/* Cards */}
           <div className="mx-auto flex-column gap-6 mb-12 justify-items-center md:flex">
@@ -178,7 +179,7 @@ export default function Header() {
               </div>
 
               <p className="text-3xl font-bold mb-2">
-                {user.last_sync ? "✓" : "−"}
+                {user.last_sync ? "✓" : "-"}
               </p>
 
               <p className="text-[var(--color-text-secondary)] text-sm">
@@ -219,25 +220,33 @@ export default function Header() {
 
   // ================= NÃO LOGADO =================
   return (
-    <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)]/80 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Layout grid: 3 colunas -> logo | nav centralizado | usuário */}
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center h-16">
-          {/* Coluna 1 - Logo (alinhada à esquerda) */}
-          <NavLink to="/" className="flex items-center gap-2 shrink-0 justify-self-start">
-            <span className="text-[var(--color-spotify-green)] font-bold text-xl tracking-tight">
-              ◉ CHARTS
-            </span>
-          </NavLink>
+    <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
+      {/* Hero */}
+      <section className="relative flex-1 flex items-center justify-center px-4 py-20">
+        <div className="hero-ornaments" aria-hidden="true">
+          <div className="hero-orb orb-1" />
+          <div className="hero-orb orb-2" />
+          <div className="hero-grid" />
+        </div>
 
-          {/* Coluna 2 - Navegação (centralizada) */}
-          <nav className="hidden md:flex items-center gap-1 justify-self-center">
-            {allLinks.map((link) => (
-              <NavLink key={link.to} to={link.to} className={linkClass}>
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+        <div className="max-w-2xl w-full text-center relative z-10">
+          <h1 className="text-7xl font-extrabold mb-6 leading-tight reveal">
+            Seus dados
+            <br />
+
+            <span className="text-[var(--color-spotify-green)] glow-text">
+              com clareza visual.
+            </span>
+          </h1>
+
+          <p
+            className="text-xl text-[var(--color-text-secondary)] mb-8 leading-relaxed reveal"
+            style={{ "--delay": "0.08s" }}
+          >
+            Conecte sua conta Spotify e transforme seus top
+            tracks, artistas e tendências em visualizações
+            impressionantes.
+          </p>
 
           <div
             className="flex flex-col sm:flex-row gap-4 justify-center reveal"
@@ -322,59 +331,45 @@ export default function Header() {
               );
             })}
           </div>
+        </div>
+      </section>
 
-          {/* Botão menu mobile (aparece no lugar da grid no mobile, mas ainda dentro do flex) */}
-          <button
-            className="md:hidden p-2 rounded-lg hover:bg-[var(--color-surface)] transition-colors justify-self-end"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Abrir menu"
+      {/* CTA */}
+      <section className="bg-[var(--color-bg-elevated)] py-20 px-4">
+        <div className="max-w-2xl mx-auto text-center">
+          <h2
+            className="text-4xl font-bold mb-6 reveal"
+            style={{ "--delay": "0.05s" }}
           >
-            {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+            Pronto para explorar seus dados?
+          </h2>
+
+          <p
+            className="text-lg text-[var(--color-text-secondary)] mb-8 reveal"
+            style={{ "--delay": "0.12s" }}
+          >
+            Conecte com Spotify e comece agora.
+          </p>
+
+          <button
+            onClick={() => navigate("/login")}
+            className="btn-primary px-8 py-4 text-lg reveal"
+            style={{ "--delay": "0.2s" }}
+          >
+            Conectar com Spotify
           </button>
         </div>
+      </section>
 
-        {/* Menu mobile */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-[var(--color-border-subtle)] py-4 animate-fade-in">
-            <nav className="flex flex-col items-center gap-2">
-              {allLinks.map((link) => (
-                <NavLink
-                  key={link.to}
-                  to={link.to}
-                  className={({ isActive }) =>
-                    `px-6 py-2 text-sm font-medium w-full text-center transition-all duration-200 rounded-lg ${
-                      isActive
-                        ? "text-[var(--color-spotify-green)] bg-[var(--color-spotify-green)]/10"
-                        : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-surface)]"
-                    }`
-                  }
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
-
-            {isAuthenticated && user && (
-              <div className="mt-4 pt-4 border-t border-[var(--color-border-subtle)] flex flex-col items-center gap-3">
-                <span className="text-sm text-[var(--color-text-secondary)]">
-                  {user.display_name || user.spotify_id}
-                </span>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    setMobileOpen(false);
-                  }}
-                  className="flex items-center gap-2 px-4 py-2 text-sm text-red-400 hover:bg-[var(--color-surface)] rounded-lg transition-colors w-full justify-center"
-                >
-                  <LogOut size={18} />
-                  Sair
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-    </header>
+      {/* Footer */}
+      <footer className="border-t border-[var(--color-border-subtle)] py-8 px-4">
+        <div className="max-w-6xl mx-auto text-center text-sm text-[var(--color-text-secondary)]">
+          <p>
+            SpotifyCharts © 2026 • Dados & Visualizações
+            Musicais
+          </p>
+        </div>
+      </footer>
+    </div>
   );
 }
