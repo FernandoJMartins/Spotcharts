@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, Zap, ArrowUpRight } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
-import './home.css'
+// import './home.css'
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -191,7 +191,6 @@ export default function HomePage() {
 
   }
 
-  // ================= NÃO LOGADO =================
   return (
     <div className="page-bg bg-[var(--color-bg-elevated)] min-h-screen flex flex-col">
       {/* Hero */}
@@ -255,7 +254,7 @@ export default function HomePage() {
             Recursos Principais
           </h2>
 
-          <div className="flex gap-8">
+          <div className="flex gap-8 items-stretch"> 
             {[
               {
                 icon: BarChart3,
@@ -281,7 +280,7 @@ export default function HomePage() {
               return (
                 <div
                   key={idx}
-                  className="card2 reveal-scale"
+                  className="card2 reveal-scale flex-1 flex flex-col" 
                   style={{
                     "--delay": `${0.1 + idx * 0.08}s`,
                   }}
@@ -297,7 +296,7 @@ export default function HomePage() {
                     {feature.title}
                   </h3>
 
-                  <p className="text-[var(--color-text-secondary)]">
+                  <p className="text-[var(--color-text-secondary)] flex-1">
                     {feature.description}
                   </p>
                 </div>

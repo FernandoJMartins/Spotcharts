@@ -95,7 +95,7 @@ class SpotifyClient:
         limit: int = 20,
         offset: int = 0,
     ) -> dict[str, str]:
-        mapping = {
+        mapping: dict[str, str] = {
             "short": "short_term",
             "medium": "medium_term",
             "long": "long_term",
