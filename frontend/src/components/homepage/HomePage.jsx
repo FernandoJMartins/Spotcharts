@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, TrendingUp, Zap, LogOut } from "lucide-react";
+import { BarChart3, TrendingUp, Zap, ArrowUpRight } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
-
+import './home.css'
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
@@ -92,130 +92,103 @@ export default function HomePage() {
   // ================= LOGADO =================
   if (isAuthenticated && user) {
     return (
-      <div className="page-bg mt-4 bg-[var(--color-bg-elevated)] min-h-screen py-20 px-4">
-        <div className="hero-ornaments" aria-hidden="true">
-          <div className="hero-orb orb-1" />
-          <div className="hero-orb orb-2" />
-          <div className="hero-grid" />
-        </div>
-
-        <div className="mx-auto py-2  relative z-10 flex flex-col items-center text-center">
-          {/* Header */}
-          
-
-          {/* Cards */}
-          <div className="mx-auto flex-column gap-6 mb-12 justify-items-center md:flex">
+    <>
+      <div className="sp-root">
+        {/* bg effects */}
+        <div className="sp-orb sp-orb-1" aria-hidden="true" />
+        <div className="sp-orb sp-orb-2" aria-hidden="true" />
+        <div className="sp-noise"         aria-hidden="true" />
+ 
+        <div className="sp-inner">
+          {/* header */}
+          <div className="sp-eyebrow" aria-hidden="true">
+            <span className="sp-eyebrow-dot" />
+            <span className="sp-eyebrow-label">Spotify conectado</span>
+          </div>
+ 
+          <h1 className="sp-headline">
+            Olá,{" "}
+            <span className="sp-headline-muted">
+              {user.display_name}
+            </span>
+          </h1>
+          <p className="sp-subline">
+            Tudo pronto para explorar sua música
+          </p>
+ 
+          {/* cards */}
+          <div className="sp-cards">
             {/* Perfil */}
-            <div
-              className="card2 reveal-scale w-full max-w-sm"
-              style={{ "--delay": "0.12s" }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Perfil
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <BarChart3
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
+            <div className="sp-card">
+              <div className="sp-card-header">
+                <span className="sp-card-label">Perfil</span>
+                <div className="sp-icon-wrap">
+                  <BarChart3 size={16} />
                 </div>
               </div>
-
-              <p className="text-3xl font-bold mb-2">
-                {user.display_name}
-              </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                Conta Spotify ativa
-              </p>
+              <p className="sp-card-value">{user.display_name}</p>
+              <p className="sp-card-desc">Conta Spotify ativa</p>
             </div>
-
-            {/* Tracks */}
+ 
+            {/* Top Tracks */}
             <div
-              className="card2 cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale"
-              style={{ "--delay": "0.2s" }}
+              className="sp-card sp-clickable"
               onClick={() => navigate("/graficos")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === "Enter" && navigate("/graficos")}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Top Faixas
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <TrendingUp
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
+              <div className="sp-card-header">
+                <span className="sp-card-label">Top Faixas</span>
+                <div className="sp-icon-wrap">
+                  <TrendingUp size={16} />
                 </div>
               </div>
-
-              <p className="text-3xl font-bold mb-2">
-                Visualizar
-              </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
-                Suas músicas mais ouvidas
-              </p>
+              <p className="sp-card-value">Visualizar</p>
+              <p className="sp-card-desc">Suas músicas mais ouvidas</p>
+              <span className="sp-card-arrow" aria-hidden="true">
+                <ArrowUpRight size={18} />
+              </span>
             </div>
-
+ 
             {/* Sync */}
-            <div
-              className="card2 reveal-scale w-full max-w-sm"
-              style={{ "--delay": "0.28s" }}
-            >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">
-                  Sincronização
-                </h3>
-
-                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
-                  <Zap
-                    className="text-[var(--color-spotify-green)]"
-                    size={20}
-                  />
+            <div className="sp-card">
+              <div className="sp-card-header">
+                <span className="sp-card-label">Sincronização</span>
+                <div className="sp-icon-wrap">
+                  <Zap size={16} />
                 </div>
               </div>
-
-              <p className="text-3xl font-bold mb-2">
-                {user.last_sync ? "✓" : "-"}
+              <p className={`sp-card-value${user.last_sync ? " sp-green" : ""}`}>
+                {user.last_sync ? "✓ Sincronizado" : "—"}
               </p>
-
-              <p className="text-[var(--color-text-secondary)] text-sm">
+              <p className="sp-card-desc">
                 {user.last_sync
-                  ? `Última atualização: ${new Date(
-                    user.last_sync
-                  ).toLocaleDateString("pt-BR")}`
+                  ? `Última atualização: ${new Date(user.last_sync).toLocaleDateString("pt-BR")}`
                   : "Nunca sincronizado"}
               </p>
             </div>
           </div>
-
+ 
           {/* CTA */}
-          <div
-            className="w-full max-w-4xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
-            style={{ "--delay": "0.35s" }}
-          >
-            <h2 className="text-3xl font-bold mb-4">
-              Pronto para explorar?
-            </h2>
-
-            <p className="text-[var(--color-text-secondary)] mb-6 max-w-md mx-auto">
-              Visualize seus top tracks, artistas, tendências e
-              muito mais em gráficos interativos.
-            </p>
-
-            <button
-              onClick={() => navigate("/graficos")}
-              className="btn-primary px-8 py-4 text-lg"
-            >
+          <div className="sp-cta">
+            <div className="sp-cta-deco" aria-hidden="true" />
+            <div className="sp-cta-text">
+              <h2>Pronto para explorar?</h2>
+              <p>
+                Visualize seus top tracks, artistas, tendências e muito
+                mais em gráficos interativos.
+              </p>
+            </div>
+            <button className="sp-btn" onClick={() => navigate("/graficos")}>
               Ver Gráficos →
             </button>
           </div>
         </div>
       </div>
-    );
+    </>
+  );
+
   }
 
   // ================= NÃO LOGADO =================

@@ -11,6 +11,7 @@ export default function Header() {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem("token");
+
       if (!token) {
         setIsAuthenticated(false);
         setUser(null);
@@ -18,12 +19,20 @@ export default function Header() {
       }
 
       try {
-        const res = await apiFetch("/api/auth/me/");
-        if (!res.ok) throw new Error("Token inválido");
+        const res = await fetch(withApiBase("/api/auth/me/"), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        const data = await res.json();
-        setIsAuthenticated(true);
-        setUser(data);
+        if (res.ok) {
+          const data = await res.json();
+          setIsAuthenticated(true);
+          setUser(data);
+        } else {
+          setIsAuthenticated(false);
+          setUser(null);
+        }
       } catch (error) {
         console.error("Auth check error:", error);
         setIsAuthenticated(false);
@@ -43,7 +52,12 @@ export default function Header() {
 
   if (token) {
     try {
-      await apiFetch("/api/auth/logout/", { method: "POST" });
+      await fetch(withApiBase("/api/auth/logout/"), {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } catch (error) {
       console.error("Erro ao notificar logout:", error);
     }
