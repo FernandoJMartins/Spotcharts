@@ -64,6 +64,160 @@ export default function Header() {
         : "text-[var(--color-text-secondary)] hover:text-white hover:bg-[var(--color-surface)]"
     }`;
 
+        <div className="mx-auto relative z-10 flex flex-col  items-center text-center">
+          {/* Header */}
+          <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6 mb-12">
+            <div className="flex flex-col items-center">
+              <h1
+                className="text-5xl font-extrabold mb-2 reveal"
+                style={{ "--delay": "0.05s" }}
+              >
+                Bem-vindo,{" "}
+                <span className="text-[var(--color-spotify-green)] glow-text">
+                  {user.display_name}
+                </span>
+              </h1>
+
+              {/* <p className="text-[var(--color-text-secondary)] text-lg">
+                Spotify ID:{" "}
+                <span className="font-mono text-sm">
+                  {user.spotify_id}
+                </span>
+              </p> */}
+
+              {/* {user.email && (
+                <p className="text-[var(--color-text-secondary)] text-lg mt-1">
+                  {user.email}
+                </p> */}
+          
+            </div>
+
+            {/* <button
+              onClick={handleLogout}
+              className="btn-secondary flex items-center gap-2 px-6 py-3 reveal"
+              style={{ "--delay": "0.12s" }}
+            >
+              <LogOut size={18} />
+              Sair
+            </button> */}
+          </div>
+
+          {/* Cards */}
+          <div className="mx-auto flex-column gap-6 mb-12 justify-items-center md:flex">
+            {/* Perfil */}
+            <div
+              className="card2 reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.12s" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Perfil
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <BarChart3
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                {user.display_name}
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                Conta Spotify ativa
+              </p>
+            </div>
+
+            {/* Tracks */}
+            <div
+              className="card2 cursor-pointer hover:border-[var(--color-spotify-green)] transition-colors reveal-scale"
+              style={{ "--delay": "0.2s" }}
+              onClick={() => navigate("/graficos")}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Top Faixas
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <TrendingUp
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                Visualizar
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                Suas músicas mais ouvidas
+              </p>
+            </div>
+
+            {/* Sync */}
+            <div
+              className="card2 reveal-scale w-full max-w-sm"
+              style={{ "--delay": "0.28s" }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">
+                  Sincronização
+                </h3>
+
+                <div className="w-10 h-10 rounded-full bg-[var(--color-spotify-green)] bg-opacity-20 flex items-center justify-center">
+                  <Zap
+                    className="text-[var(--color-spotify-green)]"
+                    size={20}
+                  />
+                </div>
+              </div>
+
+              <p className="text-3xl font-bold mb-2">
+                {user.last_sync ? "✓" : "−"}
+              </p>
+
+              <p className="text-[var(--color-text-secondary)] text-sm">
+                {user.last_sync
+                  ? `Última atualização: ${new Date(
+                    user.last_sync
+                  ).toLocaleDateString("pt-BR")}`
+                  : "Nunca sincronizado"}
+              </p>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div
+            className="w-full max-w-4xl mx-auto bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-lg p-8 text-center reveal"
+            style={{ "--delay": "0.35s" }}
+          >
+            <h2 className="text-3xl font-bold mb-4">
+              Pronto para explorar?
+            </h2>
+
+            <p className="text-[var(--color-text-secondary)] mb-6 max-w-md mx-auto">
+              Visualize seus top tracks, artistas, tendências e
+              muito mais em gráficos interativos.
+            </p>
+
+            <button
+              onClick={() => navigate("/graficos")}
+              className="btn-primary px-8 py-4 text-lg"
+            >
+              Ver Gráficos →
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================= NÃO LOGADO =================
   return (
     <header className="sticky top-0 z-50 bg-[var(--color-bg-elevated)]/80 backdrop-blur-md border-b border-[var(--color-border-subtle)] shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -85,22 +239,88 @@ export default function Header() {
             ))}
           </nav>
 
-          {/* Coluna 3 - Área do usuário (alinhada à direita) */}
-          <div className="hidden md:flex items-center gap-4 justify-self-end">
-            {isAuthenticated && user && (
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-[var(--color-text-secondary)] truncate max-w-[160px]">
-                  {user.display_name || user.spotify_id}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="p-2 hover:bg-[var(--color-surface)] rounded-lg transition-colors"
-                  title="Sair"
+          <div
+            className="flex flex-col sm:flex-row gap-4 justify-center reveal"
+            style={{ "--delay": "0.16s" }}
+          >
+            <button
+              onClick={() => navigate("/login")}
+              className="btn-primary px-8 py-4 text-lg"
+            >
+              Começar Agora
+            </button>
+
+            <a
+              href="#features"
+              className="btn-secondary px-8 py-4 text-lg"
+            >
+              Ver Features ↓
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section
+        id="features"
+        className=" mx-4 p-20"
+      >
+        <div className="mx-auto">
+          <h2
+            className="text-5xl font-bold text-center mb-16 reveal"
+            style={{ "--delay": "0.05s" }}
+          >
+            Recursos Principais
+          </h2>
+
+          <div className="flex gap-8">
+            {[
+              {
+                icon: BarChart3,
+                title: "Visualizações Poderosas",
+                description:
+                  "Gráficos de barras, linhas, donuts e mais.",
+              },
+              {
+                icon: TrendingUp,
+                title: "Análise Temporal",
+                description:
+                  "Acompanhe suas preferências musicais.",
+              },
+              {
+                icon: Zap,
+                title: "Rápido & Elegante",
+                description:
+                  "Interface moderna e responsiva.",
+              },
+            ].map((feature, idx) => {
+              const Icon = feature.icon;
+
+              return (
+                <div
+                  key={idx}
+                  className="card2 reveal-scale"
+                  style={{
+                    "--delay": `${0.1 + idx * 0.08}s`,
+                  }}
                 >
-                  <LogOut size={18} className="text-red-400 hover:text-red-500 transition-colors" />
-                </button>
-              </div>
-            )}
+                  <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-[var(--color-spotify-green)] bg-opacity-20 mb-4">
+                    <Icon
+                      className="text-white"
+                      size={24}
+                    />
+                  </div>
+
+                  <h3 className="text-xl font-bold mb-3">
+                    {feature.title}
+                  </h3>
+
+                  <p className="text-[var(--color-text-secondary)]">
+                    {feature.description}
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           {/* Botão menu mobile (aparece no lugar da grid no mobile, mas ainda dentro do flex) */}

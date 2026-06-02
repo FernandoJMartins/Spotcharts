@@ -1,7 +1,7 @@
 import { apiFetch } from "./appClient";
 
 const rawBase = import.meta.env.VITE_API_BASE || "";
-
+console.log(rawBase)
 export const API_BASE = rawBase.replace(/\/$/, "");
 console.log(API_BASE)
 export const withApiBase = (path) => {

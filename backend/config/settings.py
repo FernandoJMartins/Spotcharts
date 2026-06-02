@@ -32,7 +32,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'change-me')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
-ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com', 'host.docker.internal', 'backend', 'spotcharts.onrender.com', 'spotcharts.vercel.app', 'ridden-never-purveyor.ngrok-free.dev']
+ALLOWED_HOSTS = ['localhost', 'vercel.app', 'ngrok-free.app', 'render.com', 'host.docker.internal', 'backend', 'spotcharts.onrender.com', '.ngrok-free.dev','spotcharts.vercel.app', 'ngrok-free.dev', '.ngrok-free.dev']
 
 INSTALLED_APPS = [
     'django.contrib.admin',

@@ -35,6 +35,13 @@ def _parse_int(value, default):
         return default
 
 
+def _parse_int(value, default):
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return default
+
+
 class JWTAuthentication(BaseAuthentication):
     """
     Authenticate requests using JWT from Authorization header.
