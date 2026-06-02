@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { withApiBase } from "../../utils/apiBase";
 import { apiFetch } from "../../utils/appClient";
 
 export default function Header() {
