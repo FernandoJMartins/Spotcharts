@@ -51,7 +51,6 @@ class SpotifyClient:
         return data
 
     def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0):
-        # period mapping: short = short_term, medium = medium_term, long = long_term
         mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
         time_range = mapping.get(period, 'short_term')
         headers = {'Authorization': f'Bearer {access_token}'}
