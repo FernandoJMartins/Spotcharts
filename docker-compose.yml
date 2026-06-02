@@ -42,7 +42,7 @@ services:
       - "3000:3000"
     environment:
       - CHOKIDAR_USEPOLLING=true
-      - VITE_API_BASE=https://ridden-never-purveyor.ngrok-free.dev
+      - VITE_API_BASE=https://bulk-overdue-gondola.ngrok-free.dev
     networks:
       - app-network
 

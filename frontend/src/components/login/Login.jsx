@@ -1,24 +1,8 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { withApiBase } from "../../utils/apiBase";
-import { notifyAuthChanged } from "../../utils/appClient";
+import { notifyAuthChanged, apiFetch } from "../../utils/appClient";
 import { useState } from "react";
-
-const apiFetch = async (url, options = {}) => {
-  const token = localStorage.getItem("token");
-  const headers = {
-    "Content-Type": "application/json",
-    ...(token && { "Authorization": `Bearer ${token}` }),
-    ...options.headers,
-  };
-  
-  const response = await fetch(withApiBase(url), {
-    ...options,
-    headers,
-  });
-  
-  return response;
-};
 
 export default function Login() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -32,7 +16,7 @@ export default function Login() {
 
   const handleGuestLogin = async () => {
     try {
-      const resp = await fetch(withApiBase("/api/auth/guest/"), {
+      const resp = await apiFetch("/api/auth/guest/", {
         method: "POST",
       });
 

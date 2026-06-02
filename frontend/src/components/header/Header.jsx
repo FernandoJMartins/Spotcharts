@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 
 export default function Header() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -19,11 +20,7 @@ export default function Header() {
       }
 
       try {
-        const res = await fetch(withApiBase("/api/auth/me/"), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await apiFetch("/api/auth/me/");
 
         if (res.ok) {
           const data = await res.json();
@@ -52,11 +49,8 @@ export default function Header() {
 
   if (token) {
     try {
-      await fetch(withApiBase("/api/auth/logout/"), {
+      await apiFetch("/api/auth/logout/", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
     } catch (error) {
       console.error("Erro ao notificar logout:", error);

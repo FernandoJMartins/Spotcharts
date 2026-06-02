@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Disc3, Music2 } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 
 const DEFAULT_LIMIT = 25;
 const GRID_SIZE = 5;
@@ -250,16 +251,10 @@ export default function Charts() {
       return;
     }
 
-    const url = withApiBase(
-      `/api/auth/top-items/?type=${itemType}&period=${period}&limit=${DEFAULT_LIMIT}&offset=${nextOffset}`
+    const res = await apiFetch(
+      `/api/auth/top-items/?type=${itemType}&period=${period}&limit=${DEFAULT_LIMIT}&offset=${nextOffset}`,
+      { signal }
     );
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      signal,
-    });
 
     if (!res.ok) {
       throw new Error("Falha ao carregar dados do Spotify.");
@@ -347,15 +342,9 @@ export default function Charts() {
     }
 
     try {
-      const url = withApiBase(
+      const res = await apiFetch(
         `/api/auth/top-items/?type=${itemType}&period=${GRID_PERIOD}&limit=${GRID_LIMIT}&offset=0`
       );
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
       if (!res.ok) {
         throw new Error("Falha ao carregar dados para o grid.");

@@ -5,8 +5,7 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   
-  // const backendUrl = env.VITE_API_BASE || env.VITE_BACKEND_URL
-  const backendUrl="https://ridden-never-purveyor.ngrok-free.dev"
+  const backendUrl = env.VITE_API_BASE || "https://bulk-overdue-gondola.ngrok-free.dev"
   return {
     plugins: [react(), tailwindcss()],
     server: {

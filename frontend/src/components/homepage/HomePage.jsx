@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BarChart3, TrendingUp, Zap, ArrowUpRight } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 import './home.css'
 export default function HomePage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -20,11 +21,7 @@ export default function HomePage() {
 
     const checkAuth = async () => {
       try {
-        const res = await fetch(withApiBase("/api/auth/me/"), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+        const res = await apiFetch("/api/auth/me/");
 
         if (!res.ok) {
           localStorage.removeItem("token");
@@ -52,14 +49,9 @@ export default function HomePage() {
   }, []);
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
-
     try {
-      await fetch(withApiBase("/api/auth/logout/"), {
+      await apiFetch("/api/auth/logout/", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
       });
     } catch (error) {
       console.error(error);

@@ -16,11 +16,10 @@ export const getAuthToken = () => {
 export const authHeaders = () => {
   const token = getAuthToken();
 
-  return token
-    ? {
-        Authorization: `Bearer ${token}`,
-      }
-    : {};
+  return {
+    "ngrok-skip-browser-warning": "1",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
 };
 
 const apiGet = async (path) => {
