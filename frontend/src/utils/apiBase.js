@@ -1,8 +1,9 @@
 const rawBase = import.meta.env.VITE_API_BASE || "";
-
+console.log(rawBase)
 export const API_BASE = rawBase.replace(/\/$/, "");
 
 export const withApiBase = (path) => {
+  console.log(API_BASE)
   return `${API_BASE}${path}`;
 };
 
