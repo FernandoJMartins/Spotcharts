@@ -23,6 +23,7 @@ from services.spotify_client import SpotifyClient
 from services.dashboard_service import (
     build_track_items,
     build_album_items_from_tracks,
+    build_artist_items,
 )
 from utils.crypto import decrypt_str
 
@@ -1004,7 +1005,7 @@ class TopItemsView(APIView):
 
         item_type = request.GET.get("type", "tracks").lower()
 
-        if item_type not in ["tracks", "albums"]:
+        if item_type not in ["tracks", "albums", "artists"]:
             return Response(
                 {"detail": "invalid_type"},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -1113,6 +1114,20 @@ class TopItemsView(APIView):
                 )
 
                 items = build_track_items(
+                    payload.get("items", []),
+                    offset=offset,
+                )
+
+                total = payload.get("total", len(items))
+            elif item_type == "artists":
+                payload = sc.get_top_artists(
+                    access_token,
+                    period=period,
+                    limit=limit,
+                    offset=offset,
+                )
+
+                items = build_artist_items(
                     payload.get("items", []),
                     offset=offset,
                 )

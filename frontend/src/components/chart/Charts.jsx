@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Disc3, Music2 } from "lucide-react";
+import { Disc3, Music2, Users } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
 import { apiFetch } from "../../utils/appClient";
 
@@ -20,6 +20,11 @@ const TYPE_OPTIONS = [
     value: "tracks",
     label: "Musicas",
     icon: Music2,
+  },
+  {
+    value: "artists",
+    label: "Artistas",
+    icon: Users,
   },
 ];
 
@@ -219,9 +224,11 @@ function DashboardCard({ item }) {
           {item.name}
         </h3>
 
-        <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] truncate" title={artists}>
-          {artists}
-        </p>
+        {item.type !== "artist" && (
+          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] truncate" title={artists}>
+            {artists}
+          </p>
+        )}
 
         <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
           <span className="text-[var(--color-text-secondary)]">Plays</span>
@@ -396,6 +403,8 @@ export default function Charts() {
   const hasMore = total !== null && offset < total;
   const emptyLabel = itemType === "albums"
     ? "Nenhum album encontrado para este periodo."
+    : itemType === "artists"
+    ? "Nenhum artista encontrado para este periodo."
     : "Nenhuma musica encontrada para este periodo.";
 
   return (
