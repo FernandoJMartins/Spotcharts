@@ -1,12 +1,12 @@
-// src/routes/AppRoutes.jsx
 
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
-import Home from "../components/homepage/HomePage";
+import HomePage from "../components/homepage/HomePage";
 import Login from "../components/login/Login";
 import AuthSuccess from "../components/login/AuthSuccess";
 import Register from "../components/register/Register";
 import Charts from "../components/chart/Charts";
+import Grid from "../components/chart/Grid";
 import NotFound from "../components/error/NotFound";
 import PrivateRoute from "./PrivateRoute";
 import Header from "../components/header/Header";
@@ -34,7 +34,7 @@ export default function AppRoutes() {
           path="/"
           element={
             <LayoutWrapper>
-              <Home />
+              <HomePage />
             </LayoutWrapper>
           }
         />
@@ -76,6 +76,16 @@ export default function AppRoutes() {
             <LayoutWrapper>
               <PrivateRoute>
                 <Charts />
+              </PrivateRoute>
+            </LayoutWrapper>
+          }
+        />
+         <Route
+          path="/grid"
+          element={
+            <LayoutWrapper>
+              <PrivateRoute>
+                <Grid />
               </PrivateRoute>
             </LayoutWrapper>
           }

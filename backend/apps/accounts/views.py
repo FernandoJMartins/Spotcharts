@@ -26,14 +26,68 @@ from services.dashboard_service import (
     build_artist_items,
 )
 from utils.crypto import decrypt_str
-
 from django.contrib.auth.models import AnonymousUser
 
-def _parse_int(value, default):
-    try:
-        return int(value)
-    except (TypeError, ValueError):
-        return default
+def get_spotify_client():
+    client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+    client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+    redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
+
+    if not all([client_id, client_secret, redirect_uri]):
+        raise RuntimeError("server_not_configured")
+
+    return SpotifyClient(
+        client_id=client_id,
+        client_secret=client_secret,
+        redirect_uri=redirect_uri,
+    )
+
+
+def resolve_access_token(request, user):
+    access_token = getattr(
+        request,
+        "spotify_access_token",
+        None,
+    )
+
+    if access_token:
+        return access_token
+
+    if not user.refresh_token_encrypted:
+        raise RuntimeError("no_refresh_token")
+
+    sc = get_spotify_client()
+
+    refresh_token = decrypt_str(
+        user.refresh_token_encrypted
+    )
+
+    data = sc.refresh_token(refresh_token)
+
+    access_token = data.get("access_token")
+
+    if not access_token:
+        raise RuntimeError("missing_access_token")
+
+    new_refresh = data.get(
+        "refresh_token_encrypted"
+    )
+
+    expires_in = data.get("expires_in")
+
+    if new_refresh:
+        user.refresh_token_encrypted = new_refresh
+
+    if expires_in:
+        user.token_expires_at = (
+            timezone.now()
+            + timezone.timedelta(seconds=expires_in)
+        )
+
+    if new_refresh or expires_in:
+        user.save()
+
+    return access_token
 
 
 def _parse_int(value, default):
@@ -821,3 +875,229 @@ class TopItemsView(APIView):
             cache.set(cache_key, response_payload, cache_ttl)
 
         return Response(response_payload)
+
+
+class ResumePlaybackView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+
+        user = request.user
+
+        device_id = request.data.get(
+            "device_id"
+        )
+
+        context_uri = request.data.get(
+            "context_uri"
+        )
+
+        uris = request.data.get(
+            "uris"
+        )
+
+        position_ms = request.data.get(
+            "position_ms"
+        )
+
+        try:
+
+            sc = get_spotify_client()
+
+            access_token = resolve_access_token(
+                request,
+                user,
+            )
+
+            sc.resume_playback(
+                access_token,
+                device_id=device_id,
+                context_uri=context_uri,
+                uris=uris,
+                position_ms=position_ms,
+            )
+
+        except Exception as exc:
+
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=502,
+            )
+
+        return Response(
+            {
+                "detail": "playback_started"
+            }
+        )
+        
+class RecommendationsView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        seed_tracks = request.GET.getlist(
+            "seed_tracks"
+        )
+
+        seed_artists = request.GET.getlist(
+            "seed_artists"
+        )
+
+        seed_genres = request.GET.getlist(
+            "seed_genres"
+        )
+
+        limit = _parse_int(
+            request.GET.get("limit"),
+            20,
+        )
+
+        try:
+
+            sc = get_spotify_client()
+
+            access_token = resolve_access_token(
+                request,
+                user,
+            )
+
+            payload = sc.get_recommendations(
+                access_token,
+                seed_tracks=seed_tracks,
+                seed_artists=seed_artists,
+                seed_genres=seed_genres,
+                limit=limit,
+            )
+
+        except Exception as exc:
+
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=502,
+            )
+
+        return Response(payload)
+    
+class SavedTracksView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        limit = _parse_int(
+            request.GET.get("limit"),
+            20,
+        )
+
+        offset = _parse_int(
+            request.GET.get("offset"),
+            0,
+        )
+
+        market = request.GET.get("market")
+
+        cache_key = (
+            f"saved:{user.spotify_id}:{limit}:{offset}:{market}"
+        )
+
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response(cached)
+
+        try:
+
+            sc = get_spotify_client()
+
+            access_token = resolve_access_token(
+                request,
+                user,
+            )
+
+            payload = sc.get_saved_tracks(
+                access_token,
+                limit=limit,
+                offset=offset,
+                market=market,
+            )
+
+        except Exception as exc:
+
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=502,
+            )
+
+        cache.set(
+            cache_key,
+            payload,
+            300,
+        )
+
+        return Response(payload)
+    
+
+class PlaylistView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, playlist_id):
+
+        user = request.user
+
+        market = request.GET.get("market")
+
+        cache_key = (
+            f"playlist:{user.spotify_id}:{playlist_id}:{market}"
+        )
+
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response(cached)
+
+        try:
+            sc = get_spotify_client()
+
+            access_token = resolve_access_token(
+                request,
+                user,
+            )
+
+            payload = sc.get_playlist(
+                access_token,
+                playlist_id,
+                market=market,
+            )
+
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=502,
+            )
+
+        cache.set(cache_key, payload, 300)
+
+        return Response(payload)

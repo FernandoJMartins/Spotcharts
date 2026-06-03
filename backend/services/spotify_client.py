@@ -1,12 +1,10 @@
 """Cliente simples para interação com Spotify Web API (placeholder).
 Responsabilidade: trocar authorization code por token, renovar token, encapsular chamadas.
 """
-
-from typing import Sequence
+from typing import Sequence, Any
 import os
 import requests
 from urllib.parse import urlencode
-
 from utils.crypto import encrypt_str
 
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
@@ -18,7 +16,37 @@ class SpotifyClient:
         self.client_secret = client_secret
         self.redirect_uri = redirect_uri
 
-    def exchange_code(self, code: str):
+    def _request(
+        self,
+        method: str,
+        endpoint: str,
+        access_token: str,
+        params=None,
+        json_body=None,
+    ) -> dict[str, Any] | None:
+        headers = {
+            "Authorization": f"Bearer {access_token}"
+        }
+
+        if json_body:
+            headers["Content-Type"] = "application/json"
+
+        resp = requests.request(
+            method=method,
+            url=f"{SPOTIFY_API_BASE}{endpoint}",
+            headers=headers,
+            params=params,
+            json=json_body,
+        )
+
+        resp.raise_for_status()
+
+        if resp.status_code == 204:
+            return None
+
+        return resp.json()
+
+    def exchange_code(self, code: str) -> dict[str, Any]:
         payload = {
             'grant_type': 'authorization_code',
             'code': code,
@@ -27,14 +55,22 @@ class SpotifyClient:
             'client_secret': self.client_secret,
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
-        resp.raise_for_status()
+        
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            try:
+                return resp.json()
+            except ValueError:
+                raise e
+
         data = resp.json()
         if 'refresh_token' in data and data.get('refresh_token'):
             encrypted = encrypt_str(data.pop('refresh_token'))
             data['refresh_token_encrypted'] = encrypted
         return data
 
-    def refresh_token(self, refresh_token: str):
+    def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         payload = {
             'grant_type': 'refresh_token',
             'refresh_token': refresh_token,
@@ -42,38 +78,40 @@ class SpotifyClient:
             'client_secret': self.client_secret,
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
-        resp.raise_for_status()
+        
+        try:
+            resp.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            try:
+                return resp.json()
+            except ValueError:
+                raise e
+
         data = resp.json()
         if 'refresh_token' in data and data.get('refresh_token'):
             encrypted = encrypt_str(data.pop('refresh_token'))
             data['refresh_token_encrypted'] = encrypted
         return data
 
-    def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0):
+    def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0) -> dict[str, Any]:
         mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
         time_range = mapping.get(period, 'short_term')
-        headers = {'Authorization': f'Bearer {access_token}'}
+        
         params = {
             'time_range': time_range,
             'limit': limit,
             'offset': offset,
         }
-        resp = requests.get(
-            f"{SPOTIFY_API_BASE}/me/top/tracks",
-            params=params,
-            headers=headers,
-        )
-        resp.raise_for_status()
-        return resp.json()    
+        return self._request("GET", "/me/top/tracks", access_token, params=params)
     
     def get_playlist(
         self,
         access_token: str,
         playlist_id: str,
         market: str | None = None,
-        ) -> dict[str, str]:
-            params = {"market": market} if market else None
-            return self._request("GET", f"/playlists/{playlist_id}", access_token, params=params)
+    ) -> dict[str, Any]:
+        params = {"market": market} if market else None
+        return self._request("GET", f"/playlists/{playlist_id}", access_token, params=params)
         
     def get_saved_tracks(
         self,
@@ -81,10 +119,11 @@ class SpotifyClient:
         limit: int = 20,
         offset: int = 0,
         market: str | None = None,
-    ) -> dict[str, str]:
-        params: dict[str, str] = {"limit": limit, "offset": offset}
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {"limit": limit, "offset": offset}
         if market:
             params["market"] = market
+        return self._request("GET", "/me/tracks", access_token, params=params)
             
     def get_user_top_items(
         self,
@@ -93,8 +132,8 @@ class SpotifyClient:
         period: str = "short",
         limit: int = 20,
         offset: int = 0,
-    ) -> dict[str, str]:
-        mapping = {
+    ) -> dict[str, Any]:
+        mapping: dict[str, str] = {
             "short": "short_term",
             "medium": "medium_term",
             "long": "long_term",
@@ -115,12 +154,13 @@ class SpotifyClient:
         limit: int = 20,
         after: int | None = None,
         before: int | None = None,
-    ) -> dict[str, str]:
-        params: dict[str, str] = {"limit": limit}
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {"limit": limit}
         if after is not None:
             params["after"] = after
         if before is not None:
             params["before"] = before
+        return self._request("GET", "/me/player/recently-played", access_token, params=params)
             
     def resume_playback(
         self,
@@ -129,12 +169,12 @@ class SpotifyClient:
         device_id: str | None = None,
         context_uri: str | None = None,
         uris: Sequence[str] | None = None,
-        offset: dict[str, str] | None = None,
+        offset: dict[str, Any] | None = None,
         position_ms: int | None = None,
     ) -> None:
         params = {"device_id": device_id} if device_id else None
 
-        body: dict[str, str] = {}
+        body: dict[str, Any] = {}
         if context_uri:
             body["context_uri"] = context_uri
         if uris:
@@ -160,8 +200,8 @@ class SpotifyClient:
         min_popularity: int | None = None,
         max_popularity: int | None = None,
         target_popularity: int | None = None,
-    ) -> dict[str, str]:
-        params: dict[str, str] = {"limit": limit}
+    ) -> dict[str, Any]:
+        params: dict[str, Any] = {"limit": limit}
 
         if seed_artists:
             params["seed_artists"] = ",".join(seed_artists)
@@ -186,4 +226,3 @@ class SpotifyClient:
             params["target_popularity"] = target_popularity
 
         return self._request("GET", "/recommendations", access_token, params=params)
-

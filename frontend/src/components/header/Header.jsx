@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { withApiBase } from "../../utils/apiBase";
 import { apiFetch } from "../../utils/appClient";
 
 export default function Header() {
@@ -66,6 +65,7 @@ export default function Header() {
 
   const protectedLinks = [
     { to: "/graficos", label: "Gráficos" },
+    { to: "/grid", label: "Grid"}
   ];
 
   const allLinks = isAuthenticated

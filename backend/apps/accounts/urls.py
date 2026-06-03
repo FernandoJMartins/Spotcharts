@@ -10,4 +10,10 @@ urlpatterns = [
     path('top-items/', views.TopItemsView.as_view(), name='auth-top-items'),
     path('refresh/', views.RefreshTokenView.as_view(), name='auth-refresh'),
     path('logout/', views.LogoutView.as_view(), name='auth-logout'),
+    path("top-items/",views.TopItemsView.as_view()),
+    path("playlists/<str:playlist_id>/",views.PlaylistView.as_view()),
+    path("saved-tracks/",views.SavedTracksView.as_view()),
+    path("recommendations/",views.RecommendationsView.as_view()),
+    path("resume-playback/",views.ResumePlaybackView.as_view())
+
 ]
