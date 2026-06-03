@@ -139,21 +139,18 @@ const buildGridCanvas = async (items) => {
 
       const item = gridItems[index];
       if (item) {
-        // Solid dark bar overlay at the bottom
+
         ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
         const barHeight = 45;
         ctx.fillRect(x, y + GRID_CELL_SIZE - barHeight, GRID_CELL_SIZE, barHeight);
 
-        // Text settings
         ctx.fillStyle = "white";
         ctx.textAlign = "left";
 
-        // Item Name
         ctx.font = "bold 13px Space Grotesk, Segoe UI, sans-serif";
         const name = item.name.length > 25 ? item.name.substring(0, 23) + "..." : item.name;
         ctx.fillText(name, x + 8, y + GRID_CELL_SIZE - 25);
 
-        // Artist Name
         ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
         const artists = Array.isArray(item.artists) ? item.artists.join(", ") : (item.artists || "");
         const artistStr = artists.length > 30 ? artists.substring(0, 27) + "..." : artists;
