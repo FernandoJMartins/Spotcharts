@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
-import { Disc3, Music2 } from "lucide-react";
+import { Disc3, Music2, Users } from "lucide-react";
 import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 
 const DEFAULT_LIMIT = 25;
 const GRID_SIZE = 5;
@@ -19,6 +20,11 @@ const TYPE_OPTIONS = [
     value: "tracks",
     label: "Musicas",
     icon: Music2,
+  },
+  {
+    value: "artists",
+    label: "Artistas",
+    icon: Users,
   },
 ];
 
@@ -130,6 +136,29 @@ const buildGridCanvas = async (items) => {
 
     if (img) {
       drawCover(ctx, img, x, y, GRID_CELL_SIZE);
+
+      const item = gridItems[index];
+      if (item) {
+        // Solid dark bar overlay at the bottom
+        ctx.fillStyle = "rgba(0, 0, 0, 0.75)";
+        const barHeight = 45;
+        ctx.fillRect(x, y + GRID_CELL_SIZE - barHeight, GRID_CELL_SIZE, barHeight);
+
+        // Text settings
+        ctx.fillStyle = "white";
+        ctx.textAlign = "left";
+
+        // Item Name
+        ctx.font = "bold 13px Space Grotesk, Segoe UI, sans-serif";
+        const name = item.name.length > 25 ? item.name.substring(0, 23) + "..." : item.name;
+        ctx.fillText(name, x + 8, y + GRID_CELL_SIZE - 25);
+
+        // Artist Name
+        ctx.font = "11px Space Grotesk, Segoe UI, sans-serif";
+        const artists = Array.isArray(item.artists) ? item.artists.join(", ") : (item.artists || "");
+        const artistStr = artists.length > 30 ? artists.substring(0, 27) + "..." : artists;
+        ctx.fillText(artistStr, x + 8, y + GRID_CELL_SIZE - 10);
+      }
       continue;
     }
 
@@ -195,9 +224,11 @@ function DashboardCard({ item }) {
           {item.name}
         </h3>
 
-        <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] truncate" title={artists}>
-          {artists}
-        </p>
+        {item.type !== "artist" && (
+          <p className="text-xs sm:text-sm text-[var(--color-text-secondary)] truncate" title={artists}>
+            {artists}
+          </p>
+        )}
 
         <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
           <span className="text-[var(--color-text-secondary)]">Plays</span>
@@ -250,16 +281,10 @@ export default function Charts() {
       return;
     }
 
-    const url = withApiBase(
-      `/api/auth/top-items/?type=${itemType}&period=${period}&limit=${DEFAULT_LIMIT}&offset=${nextOffset}`
+    const res = await apiFetch(
+      `/api/auth/top-items/?type=${itemType}&period=${period}&limit=${DEFAULT_LIMIT}&offset=${nextOffset}`,
+      { signal }
     );
-
-    const res = await fetch(url, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      signal,
-    });
 
     if (!res.ok) {
       throw new Error("Falha ao carregar dados do Spotify.");
@@ -347,15 +372,9 @@ export default function Charts() {
     }
 
     try {
-      const url = withApiBase(
+      const res = await apiFetch(
         `/api/auth/top-items/?type=${itemType}&period=${GRID_PERIOD}&limit=${GRID_LIMIT}&offset=0`
       );
-
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
 
       if (!res.ok) {
         throw new Error("Falha ao carregar dados para o grid.");
@@ -384,6 +403,8 @@ export default function Charts() {
   const hasMore = total !== null && offset < total;
   const emptyLabel = itemType === "albums"
     ? "Nenhum album encontrado para este periodo."
+    : itemType === "artists"
+    ? "Nenhum artista encontrado para este periodo."
     : "Nenhuma musica encontrada para este periodo.";
 
   return (

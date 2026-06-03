@@ -28,3 +28,4 @@ venv/
 env/
 /.env.local
 /.env.*
+db.sqlite3

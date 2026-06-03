@@ -83,3 +83,21 @@ def build_album_items_from_tracks(
         item["rank"] = index + 1
 
     return items
+
+
+def build_artist_items(artists: List[Dict[str, Any]], offset: int = 0) -> List[Dict[str, Any]]:
+    items = []
+
+    for index, artist in enumerate(artists):
+        items.append({
+            "id": artist.get("id"),
+            "name": artist.get("name"),
+            "artists": [artist.get("name")],  # For consistency with tracks/albums
+            "image_url": _get_image_url(artist.get("images")),
+            "plays": artist.get("popularity") or 0,
+            "uri": artist.get("uri"),
+            "type": "artist",
+            "rank": offset + index + 1,
+        })
+
+    return items

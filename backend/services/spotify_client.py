@@ -64,8 +64,7 @@ class SpotifyClient:
             headers=headers,
         )
         resp.raise_for_status()
-        return resp.json()
-    
+        return resp.json()    
     
     def get_playlist(
         self,
