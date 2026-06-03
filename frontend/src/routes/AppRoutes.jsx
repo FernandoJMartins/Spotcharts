@@ -1,8 +1,7 @@
-// src/routes/AppRoutes.jsx
 
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
-import Home from "../components/homepage/HomePage";
+import HomePage from "../components/homepage/HomePage";
 import Login from "../components/login/Login";
 import AuthSuccess from "../components/login/AuthSuccess";
 import Register from "../components/register/Register";
@@ -35,7 +34,7 @@ export default function AppRoutes() {
           path="/"
           element={
             <LayoutWrapper>
-              <Home />
+              <HomePage />
             </LayoutWrapper>
           }
         />
