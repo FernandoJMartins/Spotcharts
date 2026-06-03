@@ -429,29 +429,6 @@ export default function Grid() {
       <style>{CSS}</style>
       <div style={styles.dashboard}>
 
-        {/* topbar */}
-        <div style={styles.topbar}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={styles.statusDot} />
-            <span style={styles.logo}>spotify<span style={{ color: "var(--sp-text)" }}>grid</span></span>
-          </div>
-          <div style={styles.navPills}>
-            {["Visão Geral", "Top Tracks", "Playlists", "Recentes"].map((label) => (
-              <button
-                key={label}
-                onClick={() => setActiveNav(label)}
-                style={{ ...styles.pill, ...(activeNav === label ? styles.pillActive : {}) }}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <i className="ti ti-headphones" style={{ fontSize: 16, color: "var(--sp-muted)" }} aria-hidden="true" />
-            <span style={{ fontSize: 12, color: "var(--sp-muted)" }}>Em reprodução</span>
-          </div>
-        </div>
-
         {/* hero */}
         <div style={styles.hero}>
           <div>
