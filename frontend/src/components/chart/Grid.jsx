@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
-
-// ── constants ────────────────────────────────────────────────────────────────
+import { withApiBase } from "../../utils/apiBase";
+import { apiFetch } from "../../utils/appClient";
 const BASE_URL = "http://localhost:8000";
 
 const TRACK_ICONS = ["ti-music", "ti-microphone", "ti-vinyl", "ti-disc", "ti-radio"];
@@ -16,7 +16,6 @@ const GENRES_MOCK = [
 
 const DAYS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
 
-// ── helpers ──────────────────────────────────────────────────────────────────
 function formatAgo(dateStr) {
   const m = Math.floor((Date.now() - new Date(dateStr)) / 60000);
   if (m < 1) return "agora";
@@ -38,8 +37,6 @@ function buildWeeklyCounts(items) {
   });
   return counts;
 }
-
-// ── sub-components ────────────────────────────────────────────────────────────
 
 function Card({ title, badge, children }) {
   return (
@@ -107,7 +104,6 @@ function LoadingState({ text = "Carregando..." }) {
   );
 }
 
-// ── section components ────────────────────────────────────────────────────────
 
 function TopItems({ items, loading }) {
   const mock = [
@@ -325,7 +321,7 @@ function ResumePlayback() {
 
   async function handleResume() {
     try {
-      await fetch(`${BASE_URL}/resume-playback/`, { method: "POST" });
+      await fetch(`${apiFetch("/resume-playback/")}`, { method: "POST" });
       setStatus("ok");
     } catch {
       setStatus("error");
@@ -396,25 +392,19 @@ export default function Grid() {
 
   const fetchAll = useCallback(async () => {
     // top items
-    fetch(`${BASE_URL}/top-items/`)
+    fetch(`${apiFetch("/api/auth/top-items/")}`)
       .then((r) => r.json())
       .then((d) => { setTopItems(d.items || d.tracks || d.artists || []); done("top"); })
       .catch(() => done("top"));
 
     // saved tracks
-    fetch(`${BASE_URL}/saved-tracks/`)
+    fetch(`${apiFetch("/api/auth/saved-tracks/")}`)
       .then((r) => r.json())
       .then((d) => { setSavedTotal(d.total || d.items?.length || 0); done("saved"); })
       .catch(() => done("saved"));
 
-    // recently played
-    fetch(`${BASE_URL}/recently-played/`)
-      .then((r) => r.json())
-      .then((d) => { setRecentItems(d.items || d.tracks || []); done("recent"); })
-      .catch(() => done("recent"));
-
     // recommendations
-    fetch(`${BASE_URL}/recommendations/`)
+    fetch(`${apiFetch("/api/auth/recommendations/")}`)
       .then((r) => r.json())
       .then((d) => { setRecTracks(d.tracks || d.items || []); done("rec"); })
       .catch(() => done("rec"));
@@ -474,16 +464,6 @@ export default function Grid() {
             </div>
             <div style={styles.cardBody}>
               <SavedTracks total={savedTotal} loading={loading.saved} />
-            </div>
-          </div>
-
-          <div style={{ ...styles.card, gridColumn: "span 6" }}>
-            <div style={styles.cardHeader}>
-              <span style={styles.cardTitle}>Tocadas Recentemente</span>
-              <span style={styles.cardBadge}>recently-played/</span>
-            </div>
-            <div style={styles.cardBody}>
-              <RecentlyPlayed items={recentItems} loading={loading.recent} />
             </div>
           </div>
 
