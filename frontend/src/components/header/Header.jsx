@@ -65,6 +65,7 @@ export default function Header() {
 
   const protectedLinks = [
     { to: "/graficos", label: "Gráficos" },
+    { to: "/grid", label: "Grid"}
   ];
 
   const allLinks = isAuthenticated
