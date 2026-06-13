@@ -1101,3 +1101,55 @@ class PlaylistView(APIView):
         cache.set(cache_key, payload, 300)
 
         return Response(payload)
+    
+class RecentlyPlayedView(APIView):
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        # Captura os parâmetros da query string
+        limit = request.GET.get("limit", 20)
+        after = request.GET.get("after")
+        before = request.GET.get("before")
+
+        # Monta a chave de cache baseada nos parâmetros dinâmicos
+        cache_key = (
+            f"recently_played:{user.spotify_id}:{limit}:{after}:{before}"
+        )
+
+        cached = cache.get(cache_key)
+
+        if cached:
+            return Response(cached)
+
+        try:
+            sc = get_spotify_client()
+
+            access_token = resolve_access_token(
+                request,
+                user,
+            )
+
+            payload = sc.get_recently_played(
+                access_token,
+                limit=int(limit) if limit else 20,
+                after=int(after) if after else None,
+                before=int(before) if before else None,
+            )
+
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "spotify_api_failed",
+                    "error": str(exc),
+                },
+                status=502,
+            )
+
+        cache.set(cache_key, payload, 300)
+
+        return Response(payload)

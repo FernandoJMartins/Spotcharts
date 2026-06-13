@@ -226,13 +226,6 @@ function DashboardCard({ item }) {
             {artists}
           </p>
         )}
-
-        <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
-          <span className="text-[var(--color-text-secondary)]">Plays</span>
-          <span className="font-semibold text-[var(--color-text-primary)]">
-            {formatPlays(item.plays)}
-          </span>
-        </div>
       </div>
     </div>
   );

@@ -14,6 +14,7 @@ urlpatterns = [
     path("playlists/<str:playlist_id>/",views.PlaylistView.as_view()),
     path("saved-tracks/",views.SavedTracksView.as_view()),
     path("recommendations/",views.RecommendationsView.as_view()),
-    path("resume-playback/",views.ResumePlaybackView.as_view())
+    path("resume-playback/",views.ResumePlaybackView.as_view()),
+    path("recently-played/",views.RecentlyPlayedView.as_view())
 
 ]
