@@ -1,12 +1,15 @@
 import { BarChart3, TrendingUp, Zap, ArrowUpRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import styles from './style.module.css';
+import HeroSection from './HeroSection';
+import FeaturesSection from './FeaturesSection';
+import Footer from '../Footer';
 
 export default function AuthenticatedDashboard({ user }) {
   const navigate = useNavigate();
 
   return (
-    <div className={styles['sp-root']}>
+    <div className={styles['sp-root','page-bg']}>
       <div className={styles['sp-orb']} aria-hidden="true" />
       <div className={styles['sp-orb-1']} aria-hidden="true" />
       <div className={styles['sp-orb-2']} aria-hidden="true" />
@@ -92,6 +95,11 @@ export default function AuthenticatedDashboard({ user }) {
           </button>
         </div>
       </div>
+    <div className=" flex flex-col">
+      <HeroSection />
+      <FeaturesSection />
+      <Footer />
+    </div>
     </div>
   );
 }

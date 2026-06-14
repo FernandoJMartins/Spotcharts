@@ -123,7 +123,12 @@ class SpotifyClient:
         params: dict[str, Any] = {"limit": limit, "offset": offset}
         if market:
             params["market"] = market
-        return self._request("GET", "/me/tracks", access_token, params=params)
+        try:
+            return self._request("GET", "/me/tracks", access_token, params=params)
+        except requests.HTTPError as e:
+            print("Status:", e.response.status_code)
+            print("Body:", e.response.text)
+            raise
             
     def get_user_top_items(
         self,
@@ -146,7 +151,12 @@ class SpotifyClient:
             "limit": limit,
             "offset": offset,
         }
-        return self._request("GET", f"/me/top/{item_type}", access_token, params=params)
+        try:
+            return self._request("GET", f"/me/top/{item_type}", access_token, params=params)
+        except requests.HTTPError as e:
+            print("Status:", e.response.status_code)
+            print("Body:", e.response.text)
+            raise
     
     def get_recently_played(
         self,
@@ -160,7 +170,12 @@ class SpotifyClient:
             params["after"] = after
         if before is not None:
             params["before"] = before
-        return self._request("GET", "/me/player/recently-played", access_token, params=params)
+        try:
+            return self._request("GET", "/me/player/recently-played", access_token, params=params)
+        except requests.HTTPError as e:
+            print("Status:", e.response.status_code)
+            print("Body:", e.response.text)
+            raise
             
     def resume_playback(
         self,

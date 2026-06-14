@@ -352,7 +352,15 @@ class GuestLoginView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
-        
+import os
+import uuid
+
+from django.shortcuts import redirect
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+
+
 class LoginView(APIView):
     """
     Start Spotify OAuth flow.
@@ -362,27 +370,29 @@ class LoginView(APIView):
     permission_classes = []
 
     def get(self, request):
-        
-        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
-        redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
-        print("REDIRECT_URI", redirect_uri)
-        if not all([client_id, redirect_uri]):
+        client_id = os.getenv("SPOTIFY_CLIENT_ID")
+        redirect_uri = os.getenv("SPOTIFY_REDIRECT_URI")
+
+        if not client_id or not redirect_uri:
             return Response(
                 {"detail": "server_not_configured"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
 
-        scopes = os.environ.get(
-            "SPOTIFY_SCOPES",
-            "user-top-read user-read-email user-read-private",
-        )
+        state = uuid.uuid4().hex
+
+        request.session["spotify_oauth_state"] = state
 
         params = {
             "response_type": "code",
             "client_id": client_id,
             "redirect_uri": redirect_uri,
-            "scope": scopes,
-            "state": uuid.uuid4().hex,
+            "scope": os.getenv(
+                "SPOTIFY_SCOPES",
+                "user-top-read user-read-email "
+                "user-read-private user-read-recently-played",
+            ),
+            "state": state,
         }
 
         url = (
@@ -390,13 +400,7 @@ class LoginView(APIView):
             + urlencode(params)
         )
 
-        resp = Response(
-            status=status.HTTP_302_FOUND
-        )
-
-        resp["Location"] = url
-
-        return resp
+        return redirect(url)
 
 
 class RefreshTokenView(APIView):

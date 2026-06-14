@@ -39,22 +39,18 @@ export default function Header() {
     checkAuth();
   }, []);
 
-  const handleLogout = async () => {
-  const token = localStorage.getItem("token");
+const handleLogout = async () => {
+  try {
+    await apiFetch("/api/auth/logout/", {
+      method: "POST",
+    });
+  } catch (error) {
+    console.error("Erro ao notificar logout:", error);
+  }
 
   localStorage.removeItem("token");
   setIsAuthenticated(false);
   setUser(null);
-
-  if (token) {
-    try {
-      await apiFetch("/api/auth/logout/", {
-        method: "POST",
-      });
-    } catch (error) {
-      console.error("Erro ao notificar logout:", error);
-    }
-  }
 
   navigate("/login", { replace: true });
 };
