@@ -216,14 +216,22 @@ class SpotifyClient:
         max_popularity: int | None = None,
         target_popularity: int | None = None,
     ) -> dict[str, Any]:
+
+        # Spotify exige pelo menos uma seed
+        if not any([seed_artists, seed_tracks, seed_genres]):
+            seed_genres = ["pop", "rock"]
+
         params: dict[str, Any] = {"limit": limit}
 
         if seed_artists:
             params["seed_artists"] = ",".join(seed_artists)
+
         if seed_tracks:
             params["seed_tracks"] = ",".join(seed_tracks)
+
         if seed_genres:
             params["seed_genres"] = ",".join(seed_genres)
+
         if market:
             params["market"] = market
 
@@ -233,6 +241,7 @@ class SpotifyClient:
             params["max_energy"] = max_energy
         if target_energy is not None:
             params["target_energy"] = target_energy
+
         if min_popularity is not None:
             params["min_popularity"] = min_popularity
         if max_popularity is not None:
@@ -240,4 +249,9 @@ class SpotifyClient:
         if target_popularity is not None:
             params["target_popularity"] = target_popularity
 
-        return self._request("GET", "/recommendations", access_token, params=params)
+        return self._request(
+            "GET",
+            "/recommendations",
+            access_token,
+            params=params,
+        )

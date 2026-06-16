@@ -96,7 +96,7 @@ export default function AuthenticatedDashboard({ user }) {
         </div>
       </div>
     <div className=" flex flex-col">
-      <HeroSection />
+      <HeroSection user={user}/>
       <FeaturesSection />
       <Footer />
     </div>

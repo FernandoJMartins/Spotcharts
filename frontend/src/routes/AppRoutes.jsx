@@ -11,7 +11,7 @@ import NotFound from "../components/error/NotFound";
 import PrivateRoute from "./PrivateRoute";
 import Header from "../components/header/Header";
 import TopTracks from "../components/pages/TopTrack";
-import SpotifyDashboard from "../components/chart/Test"
+import SpotifyDashboard from "../components/chart/Explore"
 function LayoutWrapper({ children }) {
   const location = useLocation();
   const hideHeader = ["/login", "/registro", "/auth/success"].includes(
@@ -82,6 +82,16 @@ export default function AppRoutes() {
         />
          <Route
           path="/grid"
+          element={
+            <LayoutWrapper>
+              <PrivateRoute>
+                <Grid />
+              </PrivateRoute>
+            </LayoutWrapper>
+          }
+        />
+        <Route
+          path="explore"
           element={
             <LayoutWrapper>
               <PrivateRoute>

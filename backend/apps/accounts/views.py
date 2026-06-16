@@ -390,7 +390,7 @@ class LoginView(APIView):
             "scope": os.getenv(
                 "SPOTIFY_SCOPES",
                 "user-top-read user-read-email "
-                "user-read-private user-read-recently-played",
+                "user-read-private user-read-recently-played user-read-playback-state user-read-currently-playing user-library-read",
             ),
             "state": state,
         }
@@ -981,7 +981,10 @@ class RecommendationsView(APIView):
                 seed_genres=seed_genres,
                 limit=limit,
             )
-
+        except requests.HTTPError as e:
+            print("Status:", e.response.status_code)
+            print("Body:", e.response.text)
+            raise
         except Exception as exc:
 
             return Response(

@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../utils/useeAuth'
 
-export default function HeroSection() {
+export default function HeroSection(user = {}) {
   const navigate = useNavigate();
 
   return (
@@ -20,9 +21,16 @@ export default function HeroSection() {
           Conecte sua conta Spotify e transforme seus top tracks, artistas e tendências em visualizações impressionantes.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center reveal" style={{ '--delay': '0.16s' }}>
-          <button onClick={() => navigate('/login')} className="btn-primary px-8 py-4 text-lg">
-            Começar Agora
-          </button>
+          {
+            user ? (
+              <button onClick={() => navigate('/login')} className="btn-primary px-8 py-4 text-lg">
+                Começar Agora
+              </button>
+            ):(
+              <div></div>
+            )
+          }
+          
           <a href="#features" className="btn-secondary px-8 py-4 text-lg">
             Ver Features ↓
           </a>

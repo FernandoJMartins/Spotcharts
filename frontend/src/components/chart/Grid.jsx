@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { withApiBase } from "../../utils/apiBase";
 import { apiFetch } from "../../utils/appClient";
+// import styles from '.style.module.css';
+
 const BASE_URL = "http://localhost:8000";
 
 const TRACK_ICONS = ["ti-music", "ti-microphone", "ti-vinyl", "ti-disc", "ti-radio"];
@@ -119,7 +121,7 @@ function TopItems({ items, loading }) {
     ? items.slice(0, 6).map((it) => ({
         name: it.name || it.track?.name || "—",
         artist: it.artists?.[0]?.name || it.type || "—",
-        pop: it.popularity || Math.floor(Math.random() * 40 + 55),
+        pop: it.plays,
       }))
     : mock;
 
@@ -127,22 +129,55 @@ function TopItems({ items, loading }) {
 
   return (
     <div style={styles.trackList}>
-      {list.map((t, i) => (
-        <div key={i} style={styles.trackItem}>
-          <span style={styles.trackRank}>{i + 1}</span>
-          <TrackIcon />
-          <div style={styles.trackInfo}>
-            <div style={styles.trackName}>{t.name}</div>
-            <div style={styles.trackArtist}>{t.artist}</div>
-          </div>
-          <div style={{ width: 52, flexShrink: 0 }}>
-            <div style={styles.trackBarBg}>
-              <div style={{ ...styles.trackBarFill, width: `${t.pop}%` }} />
-            </div>
-          </div>
+  {list.map((t, i) => (
+    <div key={i} style={styles.trackItem}>
+      <span
+        style={{
+          ...styles.trackRank,
+          color:
+            i === 0
+              ? "#FFD700"
+              : i === 1
+              ? "#C0C0C0"
+              : i === 2
+              ? "#CD7F32"
+              : "var(--sp-muted)",
+        }}
+      >
+        {i + 1}
+      </span>
+
+      <div style={styles.fallbackCover}>
+        <TrackIcon />
+      </div>
+
+      <div style={styles.trackInfo}>
+        <div style={styles.trackName}>
+          {t.name}
         </div>
-      ))}
+
+        <div style={styles.trackArtist}>
+          {t.artist}
+        </div>
+      </div>
+
+      <div style={styles.popularityContainer}>
+        <div style={styles.popularityText}>
+          {t.pop}
+        </div>
+
+        <div style={styles.trackBarBg}>
+          <div
+            style={{
+              ...styles.trackBarFill,
+              width: `${t.pop}%`,
+            }}
+          />
+        </div>
+      </div>
     </div>
+  ))}
+</div>
   );
 }
 
@@ -295,6 +330,26 @@ function WeeklyActivity({ items, loading }) {
     </>
   );
 }
+function calculateGenres(artists) {
+  const counter = {};
+
+  artists.forEach((artist) => {
+    (artist.genres || []).forEach((genre) => {
+      counter[genre] = (counter[genre] || 0) + 1;
+    });
+  });
+
+  const total = Object.values(counter)
+    .reduce((a, b) => a + b, 0);
+
+  return Object.entries(counter)
+    .map(([name, count]) => ({
+      name,
+      pct: Math.round((count / total) * 100),
+    }))
+    .sort((a, b) => b.pct - a.pct)
+    .slice(0, 6);
+}
 
 function Genres() {
   return (
@@ -317,7 +372,7 @@ function Genres() {
 }
 
 function ResumePlayback() {
-  const [status, setStatus] = useState("idle"); // idle | ok | error
+  const [status, setStatus] = useState("idle");
 
   async function handleResume() {
     try {
@@ -378,71 +433,143 @@ function ResumePlayback() {
   );
 }
 
-// ── main component ────────────────────────────────────────────────────────────
-
 export default function Grid() {
   const [activeNav, setActiveNav] = useState("Visão Geral");
   const [topItems, setTopItems] = useState([]);
   const [savedTotal, setSavedTotal] = useState(null);
   const [recentItems, setRecentItems] = useState([]);
   const [recTracks, setRecTracks] = useState([]);
-  const [loading, setLoading] = useState({ top: true, saved: true, recent: true, rec: true });
+  const [loading, setLoading] = useState({
+    top: true,
+    saved: true,
+    recent: true,
+  });
 
-  const done = (key) => setLoading((p) => ({ ...p, [key]: false }));
+  const token = localStorage.getItem("token");
+
+  const done = (key) =>
+    setLoading((prev) => ({
+      ...prev,
+      [key]: false,
+    }));
 
   const fetchAll = useCallback(async () => {
-    // top items
-    fetch(`${apiFetch("/api/auth/top-items/")}`)
-      .then((r) => r.json())
-      .then((d) => { setTopItems(d.items || d.tracks || d.artists || []); done("top"); })
-      .catch(() => done("top"));
+    const headers = {
+      Authorization: `Bearer ${token}`,
+    };
 
-    // saved tracks
-    fetch(`${apiFetch("/api/auth/saved-tracks/")}`)
-      .then((r) => r.json())
-      .then((d) => { setSavedTotal(d.total || d.items?.length || 0); done("saved"); })
-      .catch(() => done("saved"));
+    try {
+      const [topRes, savedRes] = await Promise.allSettled([
+        apiFetch("/api/auth/top-items/"),
+        apiFetch("/api/auth/saved-tracks/"),
+      ]);
+      // console.log(topRes.value.json())
+      if (topRes.status === "fulfilled") {
+        const response = topRes.value;
 
-    // recommendations
-    fetch(`${apiFetch("/api/auth/recommendations/")}`)
-      .then((r) => r.json())
-      .then((d) => { setRecTracks(d.tracks || d.items || []); done("rec"); })
-      .catch(() => done("rec"));
-  }, []);
+        console.log(response.status);
+        console.log(response.headers.get("content-type"));
+        console.log("content-type:", response.headers.get("content-type"));
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data)
+          setTopItems(data.items || data.tracks || data.artists || []);
+        } else {
+          const text = await response.text();
+          console.error(text);
+        }
+      }
+      done("top");
 
-  useEffect(() => { fetchAll(); }, [fetchAll]);
+      if (savedRes.status === "fulfilled") {
+        const response = savedRes.value;
+
+        console.log(response.status);
+        console.log(response.headers.get("content-type"));
+        console.log("content-type:", response.headers.get("content-type"));
+        if (response.ok) {
+          const data = await response.json();
+          console.log(data)
+          setSavedTotal(data.total || data.items?.length || 0);
+        } else {
+          const text = await response.text();
+          console.error(text);
+        }
+
+      }
+      done("saved");
+
+      // if (recRes.status === "fulfilled") {
+      //   const data = await recRes.value.json();
+      //   setRecTracks(data.tracks || data.items || []);
+      // }
+      // done("rec");
+    } catch (err) {
+      console.error(err);
+      done("top");
+      done("saved");
+    }
+  }, [token]);
+
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
 
   const fmtTotal = (n) => (n > 999 ? `${(n / 1000).toFixed(1)}k` : n ?? "—");
 
   return (
     <>
       <style>{CSS}</style>
-      <div style={styles.dashboard}>
+      <div className="page-bg" style={styles.dashboard}>
 
-        {/* hero */}
-        <div style={styles.hero}>
-          <div>
-            <h1 style={styles.heroTitle}>
-              Seu universo<br />
-              <span style={{ color: "var(--sp-green)" }}>musical</span>
-            </h1>
-            <p style={styles.heroSub}>Dashboard · Dados em tempo real via API</p>
-          </div>
-          <div style={styles.heroStats}>
-            <div style={styles.hstat}>
-              <div style={styles.hstatVal}>{fmtTotal(savedTotal)}</div>
-              <div style={styles.hstatLabel}>tracks salvas</div>
-            </div>
-            <div style={styles.hstat}>
-              <div style={styles.hstatVal}>{recentItems.length || "—"}</div>
-              <div style={styles.hstatLabel}>tocadas recentemente</div>
-            </div>
-            <div style={styles.hstat}>
-              <div style={styles.hstatVal}>{recTracks.length || "—"}</div>
-              <div style={styles.hstatLabel}>recomendações</div>
-            </div>
-          </div>
-        </div>
+        <div className={styles['sp-orb']} aria-hidden="true" />
+        <div className={styles['sp-orb-1']} aria-hidden="true" />
+        <div className={styles['sp-orb-2']} aria-hidden="true" />
+        <div className={styles['sp-noise']} aria-hidden="true" />
+
+{/* hero */}
+<div style={styles.hero}>
+  <div>
+    <h1 style={styles.heroTitle}>
+      Seu universo<br />
+      <span style={{ color: "var(--sp-green)" }}>
+        musical
+      </span>
+    </h1>
+    <p style={styles.heroSub}>
+      Dashboard · Dados em tempo real via API
+    </p>
+  </div>
+  
+  <div style={styles.heroStats}>
+    <div style={styles.hstat}>
+      <div style={styles.hstatVal}>
+        {fmtTotal(savedTotal)}
+      </div>
+      <div style={styles.hstatLabel}>
+        tracks salvas
+      </div>
+    </div>
+    
+    <div style={styles.hstat}>
+      <div style={styles.hstatVal}>
+        {recentItems.length || "—"}
+      </div>
+      <div style={styles.hstatLabel}>
+        tocadas recentemente
+      </div>
+    </div>
+    
+    <div style={styles.hstat}>
+      <div style={styles.hstatVal}>
+        {recTracks.length || "—"}
+      </div>
+      <div style={styles.hstatLabel}>
+        recomendações
+      </div>
+    </div>
+  </div>
+</div>
 
         {/* grid */}
         <div style={styles.grid}>
@@ -464,16 +591,6 @@ export default function Grid() {
             </div>
             <div style={styles.cardBody}>
               <SavedTracks total={savedTotal} loading={loading.saved} />
-            </div>
-          </div>
-
-          <div style={{ ...styles.card, gridColumn: "span 6" }}>
-            <div style={styles.cardHeader}>
-              <span style={styles.cardTitle}>Recomendações</span>
-              <span style={styles.cardBadge}>recommendations/</span>
-            </div>
-            <div style={styles.cardBody}>
-              <Recommendations tracks={recTracks} loading={loading.rec} />
             </div>
           </div>
 
@@ -513,7 +630,6 @@ export default function Grid() {
   );
 }
 
-// ── styles ────────────────────────────────────────────────────────────────────
 
 const CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
@@ -537,7 +653,6 @@ const CSS = `
   @keyframes shimmer { 0%,100%{opacity:.5} 50%{opacity:1} }
   @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 `;
-
 const styles = {
   dashboard: {
     minHeight: "100vh",
@@ -551,6 +666,40 @@ const styles = {
     justifyContent: "space-between",
     padding: "20px 28px 18px",
     borderBottom: "0.5px solid var(--sp-border)",
+  },
+  "sp-orb": {
+    position: "absolute",
+    borderRadius: "50%",
+    pointerEvents: "none",
+  },
+  "sp-orb-1": {
+    position: "absolute",
+    width: "500px",
+    height: "500px",
+    background: "radial-gradient(circle, rgba(29, 185, 84, 0.18) 0%, transparent 70%)",
+    top: "-160px",
+    right: "-120px",
+  },
+  "sp-orb-2": {
+    position: "absolute",
+    width: "350px",
+    height: "350px",
+    background: "radial-gradient(circle, rgba(29, 185, 84, 0.09) 0%, transparent 70%)",
+    bottom: 0,
+    left: "-80px",
+  },
+  "sp-noise": {
+    position: "absolute",
+    inset: 0,
+    backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")",
+    opacity: 0.025,
+    pointerEvents: "none",
+  },
+  "sp-inner": {
+    maxWidth: "860px",
+    margin: "0 auto",
+    position: "relative",
+    zIndex: 1,
   },
   statusDot: {
     width: 7,
@@ -566,7 +715,10 @@ const styles = {
     letterSpacing: -0.5,
     color: "var(--sp-green)",
   },
-  navPills: { display: "flex", gap: 6 },
+  navPills: {
+    display: "flex",
+    gap: 6,
+  },
   pill: {
     fontSize: 12,
     padding: "5px 12px",
@@ -585,6 +737,9 @@ const styles = {
   },
   hero: {
     padding: "32px 28px 24px",
+    minWidth: "70%",
+    maxWidth: "80%",
+    margin: "auto",
     display: "flex",
     alignItems: "flex-end",
     justifyContent: "space-between",
@@ -597,19 +752,36 @@ const styles = {
     letterSpacing: -1.5,
     color: "var(--sp-text)",
   },
-  heroSub: { fontSize: 13, color: "var(--sp-muted)", marginTop: 8, fontWeight: 300 },
-  heroStats: { display: "flex", gap: 20 },
-  hstat: { textAlign: "right" },
+  heroSub: {
+    fontSize: 13,
+    color: "var(--sp-muted)",
+    marginTop: 8,
+    fontWeight: 300,
+  },
+  heroStats: {
+    display: "flex",
+    gap: 20,
+  },
+  hstat: {
+    textAlign: "right",
+  },
   hstatVal: {
     fontFamily: "'Syne', sans-serif",
     fontSize: 22,
     fontWeight: 700,
     color: "var(--sp-green)",
   },
-  hstatLabel: { fontSize: 11, color: "var(--sp-muted)", marginTop: 1 },
+  hstatLabel: {
+    fontSize: 11,
+    color: "var(--sp-muted)",
+    marginTop: 1,
+  },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(12, 1fr)",
+    width: "80%",
+    maxWidth: "1400px",
+    margin: "auto",
     gap: 12,
     padding: "0 28px 28px",
   },
@@ -641,23 +813,30 @@ const styles = {
     color: "var(--sp-green)",
     border: "0.5px solid rgba(29,185,84,0.25)",
   },
-  cardBody: { padding: "14px 18px 18px" },
-  trackList: { display: "flex", flexDirection: "column", gap: 6 },
+  cardBody: {
+    padding: "14px 18px 18px",
+  },
+  trackList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6,
+  },
   trackItem: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
-    padding: "7px 10px",
-    borderRadius: 9,
-    cursor: "pointer",
+    gap: "14px",
+    padding: "12px 14px",
+    borderRadius: "12px",
+    background: "var(--sp-surface)",
+    border: "1px solid var(--sp-border)",
+    transition: "all 0.2s ease",
   },
   trackRank: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 11,
-    fontWeight: 700,
-    color: "var(--sp-muted)",
-    width: 16,
+    width: "28px",
     textAlign: "center",
+    fontWeight: 700,
+    fontSize: "0.95rem",
+    color: "var(--sp-muted)",
     flexShrink: 0,
   },
   trackIcon: {
@@ -669,24 +848,49 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
   },
-  trackInfo: { flex: 1, minWidth: 0 },
+  trackInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
   trackName: {
-    fontSize: 13,
-    fontWeight: 500,
-    whiteSpace: "nowrap",
+    fontSize: "0.95rem",
+    fontWeight: 600,
+    color: "var(--sp-text)",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
   trackArtist: {
-    fontSize: 11,
+    fontSize: "0.8rem",
     color: "var(--sp-muted)",
-    marginTop: 1,
-    whiteSpace: "nowrap",
+    marginTop: "2px",
     overflow: "hidden",
     textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
   },
-  trackBarBg: { height: 3, background: "var(--sp-subtle)", borderRadius: 2, overflow: "hidden" },
-  trackBarFill: { height: "100%", background: "var(--sp-green)", borderRadius: 2 },
+  popularityContainer: {
+    width: "70px",
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    flexShrink: 0,
+  },
+  popularityText: {
+    fontSize: "0.75rem",
+    color: "var(--sp-muted)",
+    textAlign: "right",
+  },
+  trackBarBg: {
+    height: 3,
+    background: "var(--sp-subtle)",
+    borderRadius: 2,
+    overflow: "hidden",
+  },
+  trackBarFill: {
+    height: "100%",
+    background: "var(--sp-green)",
+    borderRadius: 2,
+  },
   bigNumber: {
     fontFamily: "'Syne', sans-serif",
     fontSize: 36,
@@ -694,16 +898,62 @@ const styles = {
     letterSpacing: -1,
     lineHeight: 1,
   },
-  bigSub: { fontSize: 12, color: "var(--sp-muted)", marginTop: 5 },
-  trend: { display: "flex", alignItems: "center", gap: 4, marginTop: 12, fontSize: 12, color: "var(--sp-green)" },
-  metricRow: { display: "flex", gap: 10, marginTop: 14 },
-  metricMini: { flex: 1, background: "var(--sp-subtle)", borderRadius: 9, padding: "10px 12px" },
-  mmVal: { fontFamily: "'Syne', sans-serif", fontSize: 17, fontWeight: 700 },
-  mmLabel: { fontSize: 10, color: "var(--sp-muted)", marginTop: 2 },
-  barChart: { display: "flex", alignItems: "flex-end", gap: 5, height: 80, marginTop: 12 },
-  barCol: { flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 4 },
-  bar: { width: "100%", borderRadius: "4px 4px 0 0" },
-  barLabel: { fontSize: 9, color: "var(--sp-muted)" },
+  bigSub: {
+    fontSize: 12,
+    color: "var(--sp-muted)",
+    marginTop: 5,
+  },
+  trend: {
+    display: "flex",
+    alignItems: "center",
+    gap: 4,
+    marginTop: 12,
+    fontSize: 12,
+    color: "var(--sp-green)",
+  },
+  metricRow: {
+    display: "flex",
+    gap: 10,
+    marginTop: 14,
+  },
+  metricMini: {
+    flex: 1,
+    background: "var(--sp-subtle)",
+    borderRadius: 9,
+    padding: "10px 12px",
+  },
+  mmVal: {
+    fontFamily: "'Syne', sans-serif",
+    fontSize: 17,
+    fontWeight: 700,
+  },
+  mmLabel: {
+    fontSize: 10,
+    color: "var(--sp-muted)",
+    marginTop: 2,
+  },
+  barChart: {
+    display: "flex",
+    alignItems: "flex-end",
+    gap: 5,
+    height: 80,
+    marginTop: 12,
+  },
+  barCol: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 4,
+  },
+  bar: {
+    width: "100%",
+    borderRadius: "4px 4px 0 0",
+  },
+  barLabel: {
+    fontSize: 9,
+    color: "var(--sp-muted)",
+  },
   recentItem: {
     display: "flex",
     alignItems: "center",
@@ -723,7 +973,11 @@ const styles = {
     justifyContent: "center",
     color: "var(--sp-muted)",
   },
-  recentTime: { fontSize: 10, color: "var(--sp-muted)", flexShrink: 0 },
+  recentTime: {
+    fontSize: 10,
+    color: "var(--sp-muted)",
+    flexShrink: 0,
+  },
   playBtn: {
     width: 28,
     height: 28,
@@ -736,7 +990,14 @@ const styles = {
     justifyContent: "center",
     flexShrink: 0,
   },
-  loadingState: { display: "flex", alignItems: "center", gap: 8, color: "var(--sp-muted)", fontSize: 12, padding: "12px 0" },
+  loadingState: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    color: "var(--sp-muted)",
+    fontSize: 12,
+    padding: "12px 0",
+  },
   playbackIconWrap: {
     width: 48,
     height: 48,
