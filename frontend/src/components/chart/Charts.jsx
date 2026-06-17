@@ -4,11 +4,15 @@ import { withApiBase } from "../../utils/apiBase";
 import { apiFetch } from "../../utils/appClient";
 
 const DEFAULT_LIMIT = 25;
-const GRID_SIZE = 5;
-const GRID_LIMIT = GRID_SIZE * GRID_SIZE;
-const GRID_PERIOD = "short";
 const GRID_CELL_SIZE = 200;
 const numberFormatter = new Intl.NumberFormat("pt-BR");
+
+const GRID_SIZE_OPTIONS = [
+  { value: 3, label: "3x3" },
+  { value: 5, label: "5x5" },
+  { value: 6, label: "6x6" },
+  { value: 9, label: "9x9" },
+];
 
 const TYPE_OPTIONS = [
   {
@@ -88,9 +92,10 @@ const drawCover = (ctx, img, x, y, size) => {
   ctx.restore();
 };
 
-const buildGridCanvas = async (items) => {
+const buildGridCanvas = async (items, gridSize) => {
   const canvas = document.createElement("canvas");
-  const size = GRID_CELL_SIZE * GRID_SIZE;
+  const gridLimit = gridSize * gridSize;
+  const size = GRID_CELL_SIZE * gridSize;
 
   canvas.width = size;
   canvas.height = size;
@@ -108,7 +113,7 @@ const buildGridCanvas = async (items) => {
   ctx.fillStyle = background;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  const gridItems = items.slice(0, GRID_LIMIT);
+  const gridItems = items.slice(0, gridLimit);
   const images = await Promise.all(
     gridItems.map(async (item) => {
       if (!item || !item.image_url) {
@@ -127,9 +132,9 @@ const buildGridCanvas = async (items) => {
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
 
-  for (let index = 0; index < GRID_LIMIT; index += 1) {
-    const row = Math.floor(index / GRID_SIZE);
-    const col = index % GRID_SIZE;
+  for (let index = 0; index < gridLimit; index += 1) {
+    const row = Math.floor(index / gridSize);
+    const col = index % gridSize;
     const x = col * GRID_CELL_SIZE;
     const y = row * GRID_CELL_SIZE;
     const img = images[index];
@@ -253,6 +258,7 @@ function SkeletonCard() {
 export default function Charts() {
   const [itemType, setItemType] = useState("albums");
   const [period, setPeriod] = useState("short");
+  const [gridSize, setGridSize] = useState(5);
   const [items, setItems] = useState([]);
   const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(null);
@@ -362,8 +368,9 @@ export default function Charts() {
     }
 
     try {
+      const gridLimit = gridSize * gridSize;
       const res = await apiFetch(
-        `/api/auth/top-items/?type=${itemType}&period=${GRID_PERIOD}&limit=${GRID_LIMIT}&offset=0`
+        `/api/auth/top-items/?type=${itemType}&period=${period}&limit=${gridLimit}&offset=0`
       );
 
       if (!res.ok) {
@@ -372,15 +379,16 @@ export default function Charts() {
 
       const data = await res.json();
       const gridItems = Array.isArray(data.items)
-        ? data.items.slice(0, GRID_LIMIT)
+        ? data.items.slice(0, gridLimit)
         : [];
 
       if (gridItems.length === 0) {
         throw new Error("Sem dados para gerar o grid.");
       }
 
-      const canvas = await buildGridCanvas(gridItems);
-      const filename = `spotcharts-top-${itemType}-4-semanas.png`;
+      const canvas = await buildGridCanvas(gridItems, gridSize);
+      const periodLabel = PERIOD_OPTIONS.find(p => p.value === period)?.label || period;
+      const filename = `spotcharts-top-${itemType}-${gridSize}x${gridSize}-${periodLabel}.png`;
 
       await downloadCanvas(canvas, filename);
     } catch (err) {
@@ -457,6 +465,23 @@ export default function Charts() {
                 </button>
               ))}
             </div>
+
+            <div className="flex flex-wrap items-center justify-center sm:justify-start bg-[var(--color-surface)] border border-[var(--color-border-subtle)] rounded-full p-1 w-full sm:w-auto">
+              {GRID_SIZE_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setGridSize(option.value)}
+                  className={
+                    gridSize === option.value
+                      ? "px-4 py-2 rounded-full bg-[var(--color-border-subtle)] text-[var(--color-text-primary)] text-sm flex-1 sm:flex-none text-center"
+                      : "px-4 py-2 rounded-full text-sm text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] flex-1 sm:flex-none text-center"
+                  }
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -470,7 +495,7 @@ export default function Charts() {
             onClick={handleDownloadGrid}
             disabled={gridLoading}
           >
-            {gridLoading ? "Gerando PNG..." : "Baixar grid 5x5 (4 semanas)"}
+            {gridLoading ? "Gerando PNG..." : `Baixar grid ${gridSize}x${gridSize} (${PERIOD_OPTIONS.find(p => p.value === period)?.label})`}
           </button>
         </div>
 

@@ -103,6 +103,17 @@ class SpotifyClient:
             'offset': offset,
         }
         return self._request("GET", "/me/top/tracks", access_token, params=params)
+
+    def get_top_artists(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0) -> dict[str, Any]:
+        mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
+        time_range = mapping.get(period, 'short_term')
+        
+        params = {
+            'time_range': time_range,
+            'limit': limit,
+            'offset': offset,
+        }
+        return self._request("GET", "/me/top/artists", access_token, params=params)
     
     def get_playlist(
         self,

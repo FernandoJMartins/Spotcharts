@@ -720,7 +720,7 @@ class TopItemsView(APIView):
             0,
         )
 
-        limit = max(1, min(limit, 50))
+        limit = max(1, min(limit, 100))
         offset = max(0, offset)
 
         cache_key = (
@@ -831,19 +831,26 @@ class TopItemsView(APIView):
 
                 total = payload.get("total", len(items))
             else:
-                source_limit = max(limit + offset, 20)
-                source_limit = min(50, source_limit)
+                # Para albuns, precisamos buscar tracks e agregar.
+                # Para garantir albuns suficientes, buscamos ate 150 tracks.
+                all_tracks = []
+                # Buscamos em blocos de 50 (limite do Spotify)
+                for loop_offset in [0, 50, 100]:
+                    try:
+                        payload = sc.get_top_tracks(
+                            access_token,
+                            period=period,
+                            limit=50,
+                            offset=loop_offset,
+                        )
+                        chunk = payload.get("items", [])
+                        all_tracks.extend(chunk)
+                        if len(chunk) < 50:
+                            break
+                    except Exception:
+                        break
 
-                payload = sc.get_top_tracks(
-                    access_token,
-                    period=period,
-                    limit=source_limit,
-                    offset=0,
-                )
-
-                album_items = build_album_items_from_tracks(
-                    payload.get("items", [])
-                )
+                album_items = build_album_items_from_tracks(all_tracks)
 
                 total = len(album_items)
                 items = album_items[offset:offset + limit]

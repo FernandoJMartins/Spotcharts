@@ -13,6 +13,9 @@ __pycache__/
 *.py[cod]
 .venv/
 venv/
+Lib/
+Scripts/
+scripts/
 
 # Editor/IDE
 .vscode/
@@ -28,4 +31,5 @@ venv/
 env/
 /.env.local
 /.env.*
+*.sqlite3
 db.sqlite3
