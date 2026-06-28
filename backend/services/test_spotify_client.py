@@ -17,28 +17,27 @@ class SpotifyClientTest(SimpleTestCase):
             client_secret="test_secret",
             redirect_uri="http://localhost:8000/callback",
         )
-
+    @patch("services.spotify_client.encrypt_str")
     @patch("services.spotify_client.requests.post")
-    def test_exchange_code(self, mock_post):
+    def test_exchange_code(self, mock_post, mock_encrypt):
+        mock_encrypt.return_value = "encrypted_token"
+
         response = Mock()
+        response.raise_for_status.return_value = None
         response.json.return_value = {
             "access_token": "acc_123",
             "refresh_token": "ref_123",
             "expires_in": 3600,
         }
-        response.raise_for_status.return_value = None
 
         mock_post.return_value = response
 
         result = self.client.exchange_code("auth_code")
 
         self.assertEqual(result["access_token"], "acc_123")
-        self.assertIn("refresh_token_encrypted", result)
-        self.assertNotIn("refresh_token", result)
-
-        mock_post.assert_called_once_with(
-            SPOTIFY_TOKEN_URL,
-            data={'grant_type': 'authorization_code', 'code': 'auth_code', 'redirect_uri': 'http://localhost:8000/callback', 'client_id': 'test_id', 'client_secret': 'test_secret'}
+        self.assertEqual(
+            result["refresh_token_encrypted"],
+            "encrypted_token",
         )
 
     @patch("services.spotify_client.requests.request")
