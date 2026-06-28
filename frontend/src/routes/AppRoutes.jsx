@@ -55,6 +55,14 @@ export default function AppRoutes() {
           }
         />
         <Route
+          path="/auth/success/"
+          element={
+            <LayoutWrapper>
+              <AuthSuccess />
+            </LayoutWrapper>
+          }
+        />
+        <Route
           path="/registro"
           element={
             <LayoutWrapper>
