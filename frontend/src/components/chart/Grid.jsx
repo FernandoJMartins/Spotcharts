@@ -525,6 +525,7 @@ function Recommendations({ tracks, loading }) {
 }
 
 function WeeklyActivity({ items, loading }) {
+  console.log("WeeklyActivity items:", items, "loading:", loading);
   const mockPcts = [70, 85, 45, 90, 60, 100, 40];
   const counts = items.length ? buildWeeklyCounts(items) : mockPcts;
   const max = Math.max(...counts, 1);
@@ -721,6 +722,7 @@ export default function Grid() {
         if (response.ok) {
           const data = await response.json();
           setRecentItems(data.items || []);
+          console.log(data.items, "recently-played data");
         } else {
           const text = await response.text();
           console.error("Erro em recently-played:", text);
