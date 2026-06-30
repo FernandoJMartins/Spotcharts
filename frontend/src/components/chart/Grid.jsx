@@ -529,7 +529,7 @@ function WeeklyActivity({ items, loading }) {
   const mockPcts = [70, 85, 45, 90, 60, 100, 40];
   const counts = items.length ? buildWeeklyCounts(items) : mockPcts;
   const max = Math.max(...counts, 1);
-  const total = items.length || 47;
+  const total = items.length || 0;
   console.log("WeeklyActivity counts:", counts, "total:", total);
   if (loading)
     return (
