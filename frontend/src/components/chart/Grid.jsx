@@ -794,7 +794,7 @@ export default function Grid() {
   return (
     <>
       <style>{CSS}</style>
-      <div className="page-bg sp-root" style={styles.dashboard}>
+      <div style={styles.dashboard}>
 
         <div className={styles['sp-orb']} aria-hidden="true" />
         <div className={styles['sp-orb-1']} aria-hidden="true" />
@@ -1005,7 +1005,17 @@ const styles = {
     minHeight: "100vh",
     background: "var(--sp-bg)",
     fontFamily: "'DM Sans', sans-serif",
-    color: "var(--sp-text)",
+    // color: "var(--sp-text)",
+    background: "#000",
+    /* /* min-height: 100vh;  */
+    /* max-height: 200vh; */
+    padding: "20px 24px 80px",
+
+    position: "relative",
+    overflow: "hidden",
+    
+
+    
   },
   
   topbar: {
