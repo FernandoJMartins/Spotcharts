@@ -24,9 +24,12 @@ from services.dashboard_service import (
     build_track_items,
     build_album_items_from_tracks,
     build_artist_items,
+    build_genre_items,
+    build_mood_items
 )
 from utils.crypto import decrypt_str
 from django.contrib.auth.models import AnonymousUser
+
 
 def get_spotify_client():
     client_id = os.environ.get("SPOTIFY_CLIENT_ID")
@@ -58,9 +61,7 @@ def resolve_access_token(request, user):
 
     sc = get_spotify_client()
 
-    refresh_token = decrypt_str(
-        user.refresh_token_encrypted
-    )
+    refresh_token = decrypt_str(user.refresh_token_encrypted)
 
     data = sc.refresh_token(refresh_token)
 
@@ -69,9 +70,7 @@ def resolve_access_token(request, user):
     if not access_token:
         raise RuntimeError("missing_access_token")
 
-    new_refresh = data.get(
-        "refresh_token_encrypted"
-    )
+    new_refresh = data.get("refresh_token_encrypted")
 
     expires_in = data.get("expires_in")
 
@@ -79,10 +78,7 @@ def resolve_access_token(request, user):
         user.refresh_token_encrypted = new_refresh
 
     if expires_in:
-        user.token_expires_at = (
-            timezone.now()
-            + timezone.timedelta(seconds=expires_in)
-        )
+        user.token_expires_at = timezone.now() + timezone.timedelta(seconds=expires_in)
 
     if new_refresh or expires_in:
         user.save()
@@ -144,7 +140,8 @@ class JWTAuthentication(BaseAuthentication):
             raise exceptions.AuthenticationFailed("user_not_found")
 
         return (user, None)
-    
+
+
 class AuthCallbackView(APIView):
     """
     Handle Spotify OAuth callback.
@@ -180,7 +177,7 @@ class AuthCallbackView(APIView):
 
         try:
             token_data = sc.exchange_code(code)
-            print("TOKEN_DATA: ",token_data)
+            print("TOKEN_DATA: ", token_data)
         except Exception as exc:
             return Response(
                 {
@@ -245,8 +242,7 @@ class AuthCallbackView(APIView):
                 "email": email,
                 "refresh_token_encrypted": refresh_token_enc,
                 "token_expires_at": (
-                    timezone.now()
-                    + timezone.timedelta(seconds=expires_in)
+                    timezone.now() + timezone.timedelta(seconds=expires_in)
                     if expires_in
                     else None
                 ),
@@ -266,9 +262,7 @@ class AuthCallbackView(APIView):
 
         jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
 
-        jwt_exp_days = int(
-            os.environ.get("JWT_EXP_DAYS", "7")
-        )
+        jwt_exp_days = int(os.environ.get("JWT_EXP_DAYS", "7"))
 
         payload = {
             "sub": spotify_id,
@@ -294,9 +288,8 @@ class AuthCallbackView(APIView):
                 }
             )
 
-        return redirect(
-            f"{frontend_url.rstrip('/')}/auth/success?token={token}"
-        )
+        return redirect(f"{frontend_url.rstrip('/')}/auth/success?token={token}")
+
 
 class GuestLoginView(APIView):
     """
@@ -352,6 +345,8 @@ class GuestLoginView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
 import os
 import uuid
 
@@ -395,10 +390,7 @@ class LoginView(APIView):
             "state": state,
         }
 
-        url = (
-            "https://accounts.spotify.com/authorize?"
-            + urlencode(params)
-        )
+        url = "https://accounts.spotify.com/authorize?" + urlencode(params)
 
         return redirect(url)
 
@@ -426,9 +418,7 @@ class RefreshTokenView(APIView):
             )
 
         try:
-            refresh_token = decrypt_str(
-                user.refresh_token_encrypted
-            )
+            refresh_token = decrypt_str(user.refresh_token_encrypted)
 
         except Exception:
             return Response(
@@ -466,17 +456,18 @@ class RefreshTokenView(APIView):
             user.refresh_token_encrypted = new_refresh_enc
 
         if expires_in:
-            user.token_expires_at = (
-                timezone.now()
-                + timezone.timedelta(seconds=expires_in)
+            user.token_expires_at = timezone.now() + timezone.timedelta(
+                seconds=expires_in
             )
 
         user.save()
 
-        return Response({
-            "access_token": access_token,
-            "expires_in": expires_in,
-        })
+        return Response(
+            {
+                "access_token": access_token,
+                "expires_in": expires_in,
+            }
+        )
 
 
 class LogoutView(APIView):
@@ -489,7 +480,7 @@ class LogoutView(APIView):
 
     def post(self, request):
         user = request.user
-        
+
         if not str(user.spotify_id).startswith("guest:"):
             user.refresh_token_encrypted = None
             user.token_expires_at = None
@@ -500,9 +491,13 @@ class LogoutView(APIView):
 
         user.save()
 
-        return Response({
-            "detail": "logged_out",
-        })
+        return Response(
+            {
+                "detail": "logged_out",
+            }
+        )
+
+
 from rest_framework.permissions import AllowAny
 
 
@@ -513,13 +508,15 @@ class MeView(APIView):
     def get(self, request):
         if request.user and getattr(request.user, "is_authenticated", False):
             user = request.user
-            return Response({
-                "mode": "spotify",
-                "spotify_id": "abcde@1234ForaNeymar",
-                "display_name": user.display_name,
-                "email": user.email,
-                "last_sync": user.last_sync,
-            })
+            return Response(
+                {
+                    "mode": "spotify",
+                    "spotify_id": "abcde@1234ForaNeymar",
+                    "display_name": user.display_name,
+                    "email": user.email,
+                    "last_sync": user.last_sync,
+                }
+            )
 
         auth_header = request.headers.get("Authorization", "")
         if not auth_header.startswith("Bearer "):
@@ -535,11 +532,13 @@ class MeView(APIView):
             payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
 
             if payload.get("mode") == "guest":
-                return Response({
-                    "mode": "guest",
-                    "display_name": payload.get("name", "Guest"),
-                    "guest_id": payload.get("sub"),
-                })
+                return Response(
+                    {
+                        "mode": "guest",
+                        "display_name": payload.get("name", "Guest"),
+                        "guest_id": payload.get("sub"),
+                    }
+                )
 
             return Response({"detail": "Invalid token"}, status=401)
 
@@ -582,18 +581,19 @@ class TopTracksView(APIView):
         limit = int(request.GET.get("limit", 10))
         limit = max(1, min(limit, 50))
 
-
         if is_guest:
             mock_items = []
-            
+
             items = mock_items[:limit]
 
-            return Response({
-                "count": len(items),
-                "items": items,
-                "mode": "guest",
-                "period": period,
-            })
+            return Response(
+                {
+                    "count": len(items),
+                    "items": items,
+                    "mode": "guest",
+                    "period": period,
+                }
+            )
 
         user = request.user
 
@@ -673,22 +673,257 @@ class TopTracksView(APIView):
 
         items = []
         for track in payload.get("items", []):
-            items.append({
-                "id": track.get("id"),
-                "name": track.get("name"),
-                "artists": [
-                    artist.get("name")
-                    for artist in track.get("artists", [])
-                ],
-                "uri": track.get("uri"),
+            items.append(
+                {
+                    "id": track.get("id"),
+                    "name": track.get("name"),
+                    "artists": [
+                        artist.get("name") for artist in track.get("artists", [])
+                    ],
+                    "uri": track.get("uri"),
+                }
+            )
+
+        return Response(
+            {
+                "count": len(items),
+                "items": items,
+            }
+        )
+
+class TopGenresView(APIView):
+    # ... duplicate the setup ...
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+    def get(self, request):
+        # 1) Detect guest
+        # ... (copy exactly the guest detection block) ...
+        auth_header = request.headers.get("Authorization", "")
+        token = None
+        payload = None
+
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+
+        if token:
+            try:
+                jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
+                payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+            except Exception:
+                payload = None
+
+        is_guest = bool(payload and payload.get("mode") == "guest")
+
+        period = request.GET.get("period", "short")
+        limit = int(request.GET.get("limit", 10))
+        limit = max(1, min(limit, 50))
+
+        if is_guest:
+            mock_artists = [
+                {"genres": ["rock", "alternative", "indie"]},
+                {"genres": ["rock", "classic rock"]},
+                {"genres": ["pop", "dance pop"]},
+                {"genres": ["hip hop", "rap"]},
+                {"genres": ["electronic", "house"]},
+            ]
+            all_genres = build_genre_items(mock_artists)
+            items = all_genres[:limit]
+            return Response({
+                "count": len(items),
+                "items": items,
+                "mode": "guest",
+                "period": period,
             })
 
+        client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+        client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+        redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
+        user = request.user
+
+        if not getattr(user, "refresh_token_encrypted", None):
+            return Response(
+                {"detail": "no_refresh_token"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            refresh_token = decrypt_str(user.refresh_token_encrypted)
+        except Exception:
+            return Response(
+                {"detail": "invalid_refresh_token_storage"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+        sc = SpotifyClient(
+            client_id=client_id,
+            client_secret=client_secret,
+            redirect_uri=redirect_uri,
+        )
+
+        try:
+            data = sc.refresh_token(refresh_token)
+        except Exception as exc:
+            return Response(
+                {
+                    "detail": "refresh_failed",
+                    "error": str(exc),
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        access_token = data.get("access_token")
+
+
+        try:
+            # Note: sc.get_top_artists needs to exist
+            payload = sc.get_top_artists(
+                access_token,
+                period=period,
+                limit=limit, # Fetch this many artists
+            )
+
+        
+        except Exception as exc:
+            return Response(...)
+
+        artists = payload.get("items", [])
+        print("ARTISTS:", artists)
+        all_genres = build_genre_items(artists)
+        items = all_genres[:limit]  # Return only the top 'limit' genres
+        print("GENRES:", items)
         return Response({
             "count": len(items),
             "items": items,
+            "mode": "user", # Optional, but pattern doesn't have mode for user, but can add
         })
+class TopMoodsView(APIView):
+    """
+    Return user's Spotify top moods (genres).
+    Supports Spotify users and guest/mock users.
+    """
 
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
 
+    def get(self, request):
+        # 1) Detecta guest pelo JWT
+        
+        auth_header = request.headers.get("Authorization", "")
+        token = None
+        payload = None
+
+        if auth_header.startswith("Bearer "):
+            token = auth_header.split(" ", 1)[1].strip()
+
+        if token:
+            try:
+                jwt_secret = os.environ.get("JWT_SECRET", settings.SECRET_KEY)
+                payload = jwt.decode(token, jwt_secret, algorithms=["HS256"])
+            except Exception:
+                payload = None
+
+        is_guest = bool(payload and payload.get("mode") == "guest")
+
+        period = request.GET.get("period", "short")
+        limit = int(request.GET.get("limit", 10))
+        limit = max(1, min(limit, 50))
+
+        if is_guest:
+            mock_artists = [
+                {"genres": ["rock", "alternative", "indie"]},
+                {"genres": ["rock", "classic rock"]},
+                {"genres": ["pop", "dance pop"]},
+                {"genres": ["hip hop", "rap"]},
+                {"genres": ["electronic", "house"]},
+            ]
+            all_moods = build_mood_items(mock_artists)
+            items = all_moods[:limit]
+            return Response(
+                {
+                    "count": len(items),
+                    "items": items,
+                    "mode": "guest",
+                    "period": period,
+                }
+            )
+        else:
+            user = request.user
+
+            if not getattr(user, "refresh_token_encrypted", None):
+                return Response(
+                    {"detail": "no_refresh_token"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            try:
+                refresh_token = decrypt_str(user.refresh_token_encrypted)
+            except Exception:
+                return Response(
+                    {"detail": "invalid_refresh_token_storage"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            client_id = os.environ.get("SPOTIFY_CLIENT_ID")
+            client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
+            redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
+
+            sc = SpotifyClient(
+                client_id=client_id,
+                client_secret=client_secret,
+                redirect_uri=redirect_uri,
+            )
+
+            try:
+                data = sc.refresh_token(refresh_token)
+            except Exception as exc:
+                return Response(
+                    {
+                        "detail": "refresh_failed",
+                        "error": str(exc),
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            access_token = data.get("access_token")
+
+            if not access_token:
+                return Response(
+                    {"detail": "missing_access_token"},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            try:
+                tracks_payload = sc.get_top_tracks(
+                    access_token,
+                    period=period,
+                    limit=50,
+                )
+                tracks = tracks_payload.get("items", [])
+
+                track_ids = [track["id"] for track in tracks if track.get("id")]
+
+                audio_features = sc.get_audio_features(access_token, track_ids)
+
+                moods = build_mood_items(tracks, audio_features)
+            except Exception as exc:
+                return Response(
+                    {
+                        "detail": "spotify_api_failed",
+                        "error": str(exc),
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            items = moods[:limit]
+
+            return Response(
+                {
+                    "count": len(items),
+                    "items": items,
+                    "mode": "user",
+                    "period": period,
+                }
+            )
+
+        
 class TopItemsView(APIView):
     """
     Return dashboard items (tracks or albums) with aggregation and cache.
@@ -723,9 +958,7 @@ class TopItemsView(APIView):
         limit = max(1, min(limit, 100))
         offset = max(0, offset)
 
-        cache_key = (
-            f"top-items:{user.spotify_id}:{item_type}:{period}:{limit}:{offset}"
-        )
+        cache_key = f"top-items:{user.spotify_id}:{item_type}:{period}:{limit}:{offset}"
 
         cached = cache.get(cache_key)
 
@@ -758,9 +991,7 @@ class TopItemsView(APIView):
 
         if not access_token:
             try:
-                refresh_token = decrypt_str(
-                    user.refresh_token_encrypted
-                )
+                refresh_token = decrypt_str(user.refresh_token_encrypted)
             except Exception:
                 return Response(
                     {"detail": "invalid_refresh_token_storage"},
@@ -793,9 +1024,8 @@ class TopItemsView(APIView):
                 user.refresh_token_encrypted = new_refresh_enc
 
             if expires_in:
-                user.token_expires_at = (
-                    timezone.now()
-                    + timezone.timedelta(seconds=expires_in)
+                user.token_expires_at = timezone.now() + timezone.timedelta(
+                    seconds=expires_in
                 )
 
             if new_refresh_enc or expires_in:
@@ -853,7 +1083,7 @@ class TopItemsView(APIView):
                 album_items = build_album_items_from_tracks(all_tracks)
 
                 total = len(album_items)
-                items = album_items[offset:offset + limit]
+                items = album_items[offset : offset + limit]
 
         except Exception as exc:
             return Response(
@@ -897,21 +1127,13 @@ class ResumePlaybackView(APIView):
 
         user = request.user
 
-        device_id = request.data.get(
-            "device_id"
-        )
+        device_id = request.data.get("device_id")
 
-        context_uri = request.data.get(
-            "context_uri"
-        )
+        context_uri = request.data.get("context_uri")
 
-        uris = request.data.get(
-            "uris"
-        )
+        uris = request.data.get("uris")
 
-        position_ms = request.data.get(
-            "position_ms"
-        )
+        position_ms = request.data.get("position_ms")
 
         try:
 
@@ -940,12 +1162,9 @@ class ResumePlaybackView(APIView):
                 status=502,
             )
 
-        return Response(
-            {
-                "detail": "playback_started"
-            }
-        )
-        
+        return Response({"detail": "playback_started"})
+
+
 class RecommendationsView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -955,17 +1174,11 @@ class RecommendationsView(APIView):
 
         user = request.user
 
-        seed_tracks = request.GET.getlist(
-            "seed_tracks"
-        )
+        seed_tracks = request.GET.getlist("seed_tracks")
 
-        seed_artists = request.GET.getlist(
-            "seed_artists"
-        )
+        seed_artists = request.GET.getlist("seed_artists")
 
-        seed_genres = request.GET.getlist(
-            "seed_genres"
-        )
+        seed_genres = request.GET.getlist("seed_genres")
 
         limit = _parse_int(
             request.GET.get("limit"),
@@ -1003,7 +1216,8 @@ class RecommendationsView(APIView):
             )
 
         return Response(payload)
-    
+
+
 class SavedTracksView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -1025,9 +1239,7 @@ class SavedTracksView(APIView):
 
         market = request.GET.get("market")
 
-        cache_key = (
-            f"saved:{user.spotify_id}:{limit}:{offset}:{market}"
-        )
+        cache_key = f"saved:{user.spotify_id}:{limit}:{offset}:{market}"
 
         cached = cache.get(cache_key)
 
@@ -1067,7 +1279,7 @@ class SavedTracksView(APIView):
         )
 
         return Response(payload)
-    
+
 
 class PlaylistView(APIView):
 
@@ -1080,9 +1292,7 @@ class PlaylistView(APIView):
 
         market = request.GET.get("market")
 
-        cache_key = (
-            f"playlist:{user.spotify_id}:{playlist_id}:{market}"
-        )
+        cache_key = f"playlist:{user.spotify_id}:{playlist_id}:{market}"
 
         cached = cache.get(cache_key)
 
@@ -1115,7 +1325,8 @@ class PlaylistView(APIView):
         cache.set(cache_key, payload, 300)
 
         return Response(payload)
-    
+
+
 class RecentlyPlayedView(APIView):
 
     authentication_classes = [JWTAuthentication]
@@ -1131,9 +1342,7 @@ class RecentlyPlayedView(APIView):
         before = request.GET.get("before")
 
         # Monta a chave de cache baseada nos parâmetros dinâmicos
-        cache_key = (
-            f"recently_played:{user.spotify_id}:{limit}:{after}:{before}"
-        )
+        cache_key = f"recently_played:{user.spotify_id}:{limit}:{after}:{before}"
 
         cached = cache.get(cache_key)
 
@@ -1154,7 +1363,7 @@ class RecentlyPlayedView(APIView):
                 after=int(after) if after else None,
                 before=int(before) if before else None,
             )
-
+            print("Recently Played Payload:", payload)
         except Exception as exc:
             return Response(
                 {

@@ -17,6 +17,7 @@ class SpotifyClientTest(SimpleTestCase):
             client_secret="test_secret",
             redirect_uri="http://localhost:8000/callback",
         )
+
     @patch("services.spotify_client.encrypt_str")
     @patch("services.spotify_client.requests.post")
     def test_exchange_code(self, mock_post, mock_encrypt):
@@ -59,6 +60,29 @@ class SpotifyClientTest(SimpleTestCase):
         self.assertEqual(result["items"][0]["name"], "Song 1")
 
         mock_get.assert_called_once()
+
+    @patch("services.spotify_client.requests.request")
+    def test_get_audio_features(self, mock_request):
+        response = Mock()
+        response.json.return_value = {
+            "audio_features": [
+                {"id": "track_1", "danceability": 0.8},
+                None,
+            ]
+        }
+        response.raise_for_status.return_value = None
+
+        mock_request.return_value = response
+
+        result = self.client.get_audio_features(
+            "acc_123",
+            ["track_1", "track_2"],
+        )
+
+        self.assertEqual(len(result), 2)
+        self.assertEqual(result[0]["id"], "track_1")
+
+        mock_request.assert_called_once()
 
     @patch("services.spotify_client.requests.post")
     def test_refresh_token(self, mock_post):

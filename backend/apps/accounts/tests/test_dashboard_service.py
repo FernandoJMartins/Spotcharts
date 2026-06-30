@@ -15,9 +15,23 @@ class DashboardServiceTest(SimpleTestCase):
                 "id": "t1",
                 "name": "Track 1",
                 "artists": [{"name": "Artist 1"}],
-                "album": {"images": [{"url": "http://img1"}]},
+                "album": {
+                    "id": "a1",
+                    "name": "Album 1",
+                    "uri": "spotify:album:a1",
+                    "release_date": "2024-01-01",
+                    "release_date_precision": "day",
+                    "images": [{"url": "http://img1"}],
+                },
                 "popularity": 80,
                 "uri": "spotify:track:t1",
+                "duration_ms": 180000,
+                "explicit": True,
+                "preview_url": "http://preview1",
+                "track_number": 3,
+                "disc_number": 1,
+                "external_urls": {"spotify": "https://open.spotify.com/track/t1"},
+                "external_ids": {"isrc": "ISRC1"},
             },
             {
                 "id": "t2",
@@ -35,6 +49,10 @@ class DashboardServiceTest(SimpleTestCase):
         self.assertEqual(items[0]["name"], "Track 1")
         self.assertEqual(items[0]["rank"], 1)
         self.assertEqual(items[0]["image_url"], "http://img1")
+        self.assertEqual(items[0]["album"]["name"], "Album 1")
+        self.assertEqual(items[0]["duration_ms"], 180000)
+        self.assertTrue(items[0]["explicit"])
+        self.assertEqual(items[0]["spotify_url"], "https://open.spotify.com/track/t1")
 
         self.assertEqual(items[1]["rank"], 2)
         self.assertIsNone(items[1]["image_url"])

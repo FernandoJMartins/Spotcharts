@@ -62,7 +62,7 @@ const handleLogout = async () => {
   const protectedLinks = [
     { to: "/graficos", label: "Gráficos" },
     { to: "/grid", label: "Grid"},
-    { to: "/explore", label: "Explore"}
+    // { to: "/explore", label: "Explore"}
   ];
 
   const allLinks = isAuthenticated

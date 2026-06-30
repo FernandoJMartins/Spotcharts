@@ -1,6 +1,8 @@
 """Cliente simples para interação com Spotify Web API (placeholder).
 Responsabilidade: trocar authorization code por token, renovar token, encapsular chamadas.
 """
+
+from datetime import datetime, timedelta, timezone
 from typing import Sequence, Any
 import os
 import requests
@@ -9,6 +11,7 @@ from utils.crypto import encrypt_str
 
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_BASE = "https://api.spotify.com/v1"
+
 
 class SpotifyClient:
     def __init__(self, client_id: str, client_secret: str, redirect_uri: str):
@@ -24,9 +27,7 @@ class SpotifyClient:
         params=None,
         json_body=None,
     ) -> dict[str, Any] | None:
-        headers = {
-            "Authorization": f"Bearer {access_token}"
-        }
+        headers = {"Authorization": f"Bearer {access_token}"}
 
         if json_body:
             headers["Content-Type"] = "application/json"
@@ -48,14 +49,14 @@ class SpotifyClient:
 
     def exchange_code(self, code: str) -> dict[str, Any]:
         payload = {
-            'grant_type': 'authorization_code',
-            'code': code,
-            'redirect_uri': self.redirect_uri,
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
+            "grant_type": "authorization_code",
+            "code": code,
+            "redirect_uri": self.redirect_uri,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
-        
+
         try:
             resp.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -65,20 +66,20 @@ class SpotifyClient:
                 raise e
 
         data = resp.json()
-        if 'refresh_token' in data and data.get('refresh_token'):
-            encrypted = encrypt_str(data.pop('refresh_token'))
-            data['refresh_token_encrypted'] = encrypted
+        if "refresh_token" in data and data.get("refresh_token"):
+            encrypted = encrypt_str(data.pop("refresh_token"))
+            data["refresh_token_encrypted"] = encrypted
         return data
 
     def refresh_token(self, refresh_token: str) -> dict[str, Any]:
         payload = {
-            'grant_type': 'refresh_token',
-            'refresh_token': refresh_token,
-            'client_id': self.client_id,
-            'client_secret': self.client_secret,
+            "grant_type": "refresh_token",
+            "refresh_token": refresh_token,
+            "client_id": self.client_id,
+            "client_secret": self.client_secret,
         }
         resp = requests.post(SPOTIFY_TOKEN_URL, data=payload)
-        
+
         try:
             resp.raise_for_status()
         except requests.exceptions.HTTPError as e:
@@ -88,33 +89,61 @@ class SpotifyClient:
                 raise e
 
         data = resp.json()
-        if 'refresh_token' in data and data.get('refresh_token'):
-            encrypted = encrypt_str(data.pop('refresh_token'))
-            data['refresh_token_encrypted'] = encrypted
+        if "refresh_token" in data and data.get("refresh_token"):
+            encrypted = encrypt_str(data.pop("refresh_token"))
+            data["refresh_token_encrypted"] = encrypted
         return data
 
-    def get_top_tracks(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0) -> dict[str, Any]:
-        mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
-        time_range = mapping.get(period, 'short_term')
-        
+    def get_top_tracks(
+        self, access_token: str, period: str = "short", limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
+        mapping = {"short": "short_term", "medium": "medium_term", "long": "long_term"}
+        time_range = mapping.get(period, "short_term")
+
         params = {
-            'time_range': time_range,
-            'limit': limit,
-            'offset': offset,
+            "time_range": time_range,
+            "limit": limit,
+            "offset": offset,
         }
         return self._request("GET", "/me/top/tracks", access_token, params=params)
 
-    def get_top_artists(self, access_token: str, period: str = 'short', limit: int = 20, offset: int = 0) -> dict[str, Any]:
-        mapping = {'short': 'short_term', 'medium': 'medium_term', 'long': 'long_term'}
-        time_range = mapping.get(period, 'short_term')
-        
+    def get_top_artists(
+        self, access_token: str, period: str = "short", limit: int = 20, offset: int = 0
+    ) -> dict[str, Any]:
+        mapping = {"short": "short_term", "medium": "medium_term", "long": "long_term"}
+        time_range = mapping.get(period, "short_term")
+
         params = {
-            'time_range': time_range,
-            'limit': limit,
-            'offset': offset,
+            "time_range": time_range,
+            "limit": limit,
+            "offset": offset,
         }
         return self._request("GET", "/me/top/artists", access_token, params=params)
-    
+
+    def get_audio_features(
+        self,
+        access_token: str,
+        track_ids: Sequence[str],
+    ) -> list[dict[str, Any] | None]:
+        if not track_ids:
+            return []
+
+        params = {
+            "ids": ",".join(track_ids),
+        }
+
+        payload = self._request(
+            "GET",
+            "/audio-features",
+            access_token,
+            params=params,
+        )
+
+        if not payload:
+            return []
+
+        return payload.get("audio_features", []) or []
+
     def get_playlist(
         self,
         access_token: str,
@@ -122,8 +151,10 @@ class SpotifyClient:
         market: str | None = None,
     ) -> dict[str, Any]:
         params = {"market": market} if market else None
-        return self._request("GET", f"/playlists/{playlist_id}", access_token, params=params)
-        
+        return self._request(
+            "GET", f"/playlists/{playlist_id}", access_token, params=params
+        )
+
     def get_saved_tracks(
         self,
         access_token: str,
@@ -140,7 +171,7 @@ class SpotifyClient:
             print("Status:", e.response.status_code)
             print("Body:", e.response.text)
             raise
-            
+
     def get_user_top_items(
         self,
         access_token: str,
@@ -163,12 +194,14 @@ class SpotifyClient:
             "offset": offset,
         }
         try:
-            return self._request("GET", f"/me/top/{item_type}", access_token, params=params)
+            return self._request(
+                "GET", f"/me/top/{item_type}", access_token, params=params
+            )
         except requests.HTTPError as e:
             print("Status:", e.response.status_code)
             print("Body:", e.response.text)
             raise
-    
+
     def get_recently_played(
         self,
         access_token: str,
@@ -177,17 +210,21 @@ class SpotifyClient:
         before: int | None = None,
     ) -> dict[str, Any]:
         params: dict[str, Any] = {"limit": limit}
+        if after is None:
+            after = int((datetime.now(timezone.utc) - timedelta(days=7)).timestamp() * 1000)
         if after is not None:
             params["after"] = after
         if before is not None:
             params["before"] = before
         try:
-            return self._request("GET", "/me/player/recently-played", access_token, params=params)
+            return self._request(
+                "GET", "/me/player/recently-played", access_token, params=params
+            )
         except requests.HTTPError as e:
             print("Status:", e.response.status_code)
             print("Body:", e.response.text)
             raise
-            
+
     def resume_playback(
         self,
         access_token: str,
@@ -210,7 +247,13 @@ class SpotifyClient:
         if position_ms is not None:
             body["position_ms"] = position_ms
 
-        self._request("PUT", "/me/player/play", access_token, params=params, json_body=body or None)
+        self._request(
+            "PUT",
+            "/me/player/play",
+            access_token,
+            params=params,
+            json_body=body or None,
+        )
 
     def get_recommendations(
         self,

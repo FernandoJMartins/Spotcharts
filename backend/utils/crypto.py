@@ -11,6 +11,7 @@ Usage:
     encrypted = encrypt_str(refresh_token)
     plain = decrypt_str(encrypted)
 """
+
 from __future__ import annotations
 
 import base64
@@ -40,7 +41,9 @@ def get_fernet() -> Fernet:
 
     django_secret = os.environ.get("DJANGO_SECRET_KEY")
     if not django_secret:
-        raise RuntimeError("No TOKEN_ENC_KEY or DJANGO_SECRET_KEY available for token encryption")
+        raise RuntimeError(
+            "No TOKEN_ENC_KEY or DJANGO_SECRET_KEY available for token encryption"
+        )
 
     derived = _derive_key_from_secret(django_secret)
     return Fernet(derived)

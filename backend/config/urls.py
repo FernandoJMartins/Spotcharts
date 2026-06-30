@@ -6,15 +6,15 @@ from rest_framework import status
 
 class HealthCheckView(APIView):
     """Simple health check endpoint for the API."""
-    
+
     def get(self, request):
         return Response(
-            {'status': 'ok', 'message': 'SpotifyCharts API is running'},
-            status=status.HTTP_200_OK
+            {"status": "ok", "message": "SpotifyCharts API is running"},
+            status=status.HTTP_200_OK,
         )
 
 
 urlpatterns = [
-    path('health/', HealthCheckView.as_view(), name='health-check'),
-    path('api/auth/', include('apps.accounts.urls')),
+    path("health/", HealthCheckView.as_view(), name="health-check"),
+    path("api/auth/", include("apps.accounts.urls")),
 ]

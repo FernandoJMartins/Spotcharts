@@ -33,16 +33,11 @@ class SpotifyTokenAutoRefreshMiddleware(MiddlewareMixin):
         expires_at = getattr(user, "token_expires_at", None)
 
         # token ainda válido
-        if (
-            expires_at
-            and expires_at > timezone.now() + timezone.timedelta(seconds=30)
-        ):
+        if expires_at and expires_at > timezone.now() + timezone.timedelta(seconds=30):
             return None
 
         try:
-            refresh_token = decrypt_str(
-                user.refresh_token_encrypted
-            )
+            refresh_token = decrypt_str(user.refresh_token_encrypted)
 
         except Exception:
             return None
@@ -51,11 +46,13 @@ class SpotifyTokenAutoRefreshMiddleware(MiddlewareMixin):
         client_secret = os.environ.get("SPOTIFY_CLIENT_SECRET")
         redirect_uri = os.environ.get("SPOTIFY_REDIRECT_URI")
 
-        if not all([
-            client_id,
-            client_secret,
-            redirect_uri,
-        ]):
+        if not all(
+            [
+                client_id,
+                client_secret,
+                redirect_uri,
+            ]
+        ):
             return None
 
         sc = SpotifyClient(
@@ -75,21 +72,16 @@ class SpotifyTokenAutoRefreshMiddleware(MiddlewareMixin):
         if not access_token:
             return None
 
-        new_refresh_enc = data.get(
-            "refresh_token_encrypted"
-        )
+        new_refresh_enc = data.get("refresh_token_encrypted")
 
         expires_in = data.get("expires_in")
 
         if new_refresh_enc:
-            user.refresh_token_encrypted = (
-                new_refresh_enc
-            )
+            user.refresh_token_encrypted = new_refresh_enc
 
         if expires_in:
-            user.token_expires_at = (
-                timezone.now()
-                + timezone.timedelta(seconds=expires_in)
+            user.token_expires_at = timezone.now() + timezone.timedelta(
+                seconds=expires_in
             )
 
         user.save()
