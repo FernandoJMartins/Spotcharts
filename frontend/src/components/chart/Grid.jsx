@@ -363,40 +363,9 @@ function TopItems({ items, loading }) {
 
 function SavedTracks({ total, items, loading }) {
   const mock = [
-    {
-      name: "Beauty Of Annihilation",
-      artist: "Elena Siegman, Kevin Sherwood, Brian Tuey",
-      album: "Call of Duty: Black Ops – Zombies (Original Game Soundtrack)",
-      duration: "4:28",
-      addedAt: "22 Jan",
-      explicit: false,
-    },
-    {
-      name: "so obsessed",
-      artist: "coldwntr, humanendeavour",
-      album: "she doesn't know these songs are about her",
-      duration: "2:00",
-      addedAt: "11 Nov",
-      explicit: false,
-    },
-    {
-      name: "Lovestory",
-      artist: "h4rtbrkr, DethTech",
-      album: "h4rtbrkr",
-      duration: "1:55",
-      addedAt: "01 Oct",
-      explicit: false,
-    },
-    {
-      name: "Godzilla (feat. Juice WRLD)",
-      artist: "Eminem, Juice WRLD",
-      album: "Music To Be Murdered By",
-      duration: "3:30",
-      addedAt: "24 Mar",
-      explicit: true,
-    },
+    
   ];
-
+  console.log("SavedTracks total:", total, "items:", items);
   const normalized = normalizeSavedTracks(items);
   const list = normalized.length ? normalized : mock;
 
